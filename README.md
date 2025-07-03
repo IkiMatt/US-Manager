@@ -16,6 +16,13 @@ Permette la compilazione, modifica, visualizzazione e esportazione di schede US,
 
 ---
 
+## 🤖 Uso:
+Per utilizzare USmanager, copia il file USmanager.py nella cartella di lavoro. 
+All'avvio, il programma creerà automaticamente due cartelle: manager e schede-us.
+Queste conterranno i file relativi al progetto specifico.
+
+---
+
 ## 📖 Citazione
 Puoi citare USmanager ufilizzado la seguente citazione di BibTeX:
 
