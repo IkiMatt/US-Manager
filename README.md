@@ -10,7 +10,7 @@ Permette la compilazione, modifica, visualizzazione e esportazione di schede US,
 - Interfaccia GUI tabulata con gestione delle schede US
 - Salvataggio delle schede US in formato JSON
 - Supporto multilingua (🇮🇹 🇬🇧 🇩🇪)
-- Generazione dinamica della Matrix di Harris
+- Generazione dinamica del Matrix di Harris
 - Esportazione CSV e SVG
 - Nessuna installazione esterna richiesta, compatibile con Python 3
 
