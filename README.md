@@ -7,8 +7,8 @@ Permette la compilazione, modifica, visualizzazione e esportazione di schede US,
 
 ## ✨ Funzionalità principali
 
-- Interfaccia GUI tabulata con gestione campi US
-- Salvataggio automatico in formato JSON
+- Interfaccia GUI tabulata con gestione delle schede US
+- Salvataggio delle schede US in formato JSON
 - Supporto multilingua (🇮🇹 🇬🇧 🇩🇪)
 - Generazione dinamica della Matrix di Harris
 - Esportazione CSV e SVG
