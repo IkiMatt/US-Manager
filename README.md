@@ -16,9 +16,10 @@ Permette la compilazione, modifica, visualizzazione e esportazione di schede US,
 
 ---
 
-## Citazione
+## 📖 Citazione
 Puoi citare USmanager ufilizzado la seguente citazione di BibTeX:
 
+```bash
 @misc{curto2025usmanager,
   author = {Curto, Mattia},
   title = {USmanager},
@@ -26,7 +27,7 @@ Puoi citare USmanager ufilizzado la seguente citazione di BibTeX:
   year = {2025},
   howpublished = {\url{https://github.com/IkiMatt/US-Manager/}}
 }
-
+```
 ---
 
 ## 🚀 Avvio rapido
