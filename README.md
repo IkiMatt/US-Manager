@@ -1,7 +1,7 @@
 # USmanager
 
 **USmanager** è uno strumento open source per la gestione delle Unità Stratigrafiche (US) in ambito archeologico.  
-Permette la compilazione, modifica, visualizzazione e esportazione di schede US, con supporto multilingua e generazione della Matrix di Harris.
+Permette la compilazione, modifica, visualizzazione e esportazione di schede US, con supporto multilingua e generazione del Matrix di Harris.
 
 ---
 
