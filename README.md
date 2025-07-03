@@ -1,6 +1,6 @@
-# USmanager
+# US-manager
 
-**USmanager** è uno strumento open source per la gestione delle Unità Stratigrafiche (US) in ambito archeologico.  
+**US-manager** è uno strumento open source per la gestione delle Unità Stratigrafiche (US) in ambito archeologico.  
 Permette la compilazione, modifica, visualizzazione e esportazione di schede US, con supporto multilingua e generazione del Matrix di Harris.
 
 ---
@@ -17,19 +17,19 @@ Permette la compilazione, modifica, visualizzazione e esportazione di schede US,
 ---
 
 ## 🤖 Uso:
-Per utilizzare USmanager, copia il file USmanager.py nella cartella di lavoro. 
+Per utilizzare us_manager, copia il file USmanager.py nella cartella di lavoro. 
 All'avvio, il programma creerà automaticamente due cartelle: manager e schede-us.
 Queste conterranno i file relativi al progetto specifico.
 
 ---
 
 ## 📖 Citazione
-Puoi citare USmanager ufilizzado la seguente citazione di BibTeX:
+Puoi citare US-manager ufilizzado la seguente citazione di BibTeX:
 
 ```bash
 @misc{curto2025usmanager,
   author = {Curto, Mattia},
-  title = {USmanager},
+  title = {US-manager},
   copyright = {All rights reserved},
   year = {2025},
   howpublished = {\url{https://github.com/IkiMatt/US-Manager/}}
@@ -40,6 +40,6 @@ Puoi citare USmanager ufilizzado la seguente citazione di BibTeX:
 ## 🚀 Avvio rapido
 
 ```bash
-git clone https://github.com/IkiMatt/USmanager
-cd USmanager
+git clone https://github.com/IkiMatt/US-Manager
+cd US-manager
 python us_manager.py
