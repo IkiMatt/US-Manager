@@ -1,26 +1,17 @@
-US Manager - Licenza Open Source con obbligo di citazione accademica
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
 
-Copyright (c) 2025 Mattia Curto
+Copyright (C) 2025 Mattia Curto
 
-Il software "US Manager" è distribuito con licenza open source gratuita, con le seguenti condizioni:
+...
 
-1. È consentito l'uso, la copia, la modifica e la distribuzione del software per qualsiasi scopo, anche commerciale e accademico.
-2. È obbligatorio mantenere questa nota di copyright e la presente licenza in tutte le copie o porzioni sostanziali del software.
-3. È obbligatorio citare l'autore in qualsiasi pubblicazione, tesi, articolo, presentazione o lavoro accademico che utilizzi, anche parzialmente, questo software o i dati da esso prodotti. La citazione deve essere la seguente:
+--- (testo GPL completo) ---
 
-   Curto, M. (2025). US Manager: software open source per la gestione delle Unità Stratigrafiche. https://github.com/mattiacurto
+Additional Terms pursuant to GPLv3 Section 7:
 
-4. Il software è fornito "così com'è", senza alcuna garanzia espressa o implicita.
+If this software is used for scientific or academic purposes, including publication of derived works, datasets, or results generated using this tool, you must cite the project as follows:
 
-Per richieste di collaborazione, supporto o segnalazione di bug, contattare l'autore tramite il repository ufficiale.
+Mattia Curto, USmanager: strumento open source per la gestione delle unità stratigrafiche*, 2025.  
+Disponibile su: https://github.com/IkiMatt/USmanager
 
 ---
-
-# LICENZA (IT)
-Questo software è distribuito con licenza libera. Puoi usarlo, modificarlo e ridistribuirlo liberamente, a patto di mantenere questa nota di licenza.
-
-# LICENSE (EN)
-This software is distributed under a free license. You may use, modify, and redistribute it freely, provided that this license notice is retained.
-
-# LIZENZ (DE)
-Diese Software wird unter einer freien Lizenz veröffentlicht. Sie dürfen sie frei verwenden, ändern und weitergeben, sofern dieser Lizenzhinweis erhalten bleibt.
