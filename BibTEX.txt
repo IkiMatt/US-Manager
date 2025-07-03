@@ -1,0 +1,6 @@
+@misc{curto2025usmanager,
+  author = {Curto, Mattia},
+  title = {USmanager: strumento open source per la gestione delle unità stratigrafiche},
+  year = {2025},
+  howpublished = {\url{https://github.com/IkiMatt/USmanager}}
+}
