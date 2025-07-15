@@ -1,1581 +1,1401 @@
-import os
-import json
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import filedialog
-import csv
+import os
+from tkinter import simpledialog, messagebox
+from tkinter import ttk
+import json
+from tkinter import BooleanVar
+import ast # Per ast.literal_eval
+import tkinter.font as tkFont # Importa tkinter.font
+import datetime
 
-# Directory dove vengono salvate le schede
-US_DIR = "schede_us"
-MANAGER_DIR = "manager"
-os.makedirs(US_DIR, exist_ok=True)
-os.makedirs(MANAGER_DIR, exist_ok=True)
-
-# Percorsi file
-PROG_MANAGER_PATH = os.path.join(US_DIR, "prog_manager.json")
-TRANSLATION_PATH = os.path.join(MANAGER_DIR, "translations.json")
-
-# Crea il file di traduzioni se non esiste
-TRANSLATION_DEFAULT = {
-  "it": {
-    "project_params": "Parametri Progetto",
-    "save": "Salva",
-    "project_name": "Nome del progetto",
-    "project_code": "Codice del progetto",
-    "street": "Via",
-    "city": "Comune",
-    "province": "Provincia",
-    "year": "Anno",
-    "ente": "Ente responsabile",
-    "ufficio": "Ufficio MiC competente",
-    "main_title": "Gestione Schede US",
-    "new_card": "Nuova scheda",
-    "edit_card": "Modifica scheda",
-    "delete_card": "Elimina scheda",
-    "editor_matrix": "Editor Matrix",
-    "export_csv": "Esporta CSV",
-    "export_matrix": "Esporta Matrix",
-    "tab1": "Anagrafica",
-    "tab2": "Cosa contiene",
-    "tab3": "Relazioni US",
-    "tab4": "Osservazioni",
-    "tab5": "Autore",
-    "id": "ID",
-    "nr_us": "Nr US",
-    "area_struttura": "Area/struttura",
-    "saggio": "Saggio",
-    "settore": "Settore",
-    "quadrato": "Quadrato",
-    "criteri_distinzione": "Criteri di distinzione",
-    "componenti_organici": "Componenti Organici",
-    "componenti_inorganici": "Componenti Inorganici",
-    "consistenza": "Consistenza (1-5)",
-    "colore": "Colore",
-    "misure": "Misure",
-    "stato_conservazione": "Stato di conservazione",
-    "copre": "Copre (US separate da virgola)",
-    "uguale_a": "Uguale a (US separate da virgola)",
-    "coperto_da": "Coperto da (US separate da virgola)",
-    "si_lega_a": "Si lega a (US separate da virgola)",
-    "gli_si_appoggia": "Gli si appoggia (US separate da virgola)",
-    "si_appoggia_a": "Si appoggia a (US separate da virgola)",
-    "taglia": "Taglia (US separate da virgola)",
-    "tagliato_da": "Tagliato da (US separate da virgola)",
-    "riempie": "Riempie (US separate da virgola)",
-    "riempito_da": "Riempito da (US separate da virgola)",
-    "descrizione": "Descrizione",
-    "osservazioni": "Osservazioni",
-    "interpretazioni": "Interpretazioni",
-    "datazione": "Datazione",
-    "elementi_datanti": "Elementi datanti",
-    "data_rilevamento": "Data di rilevamento",
-    "responsabile_compilazione": "Responsabile compilazione",
-    "edit_title": "Modifica Scheda US",
-    "new_title": "Nuova Scheda US"
-  },
-  "en": {
-    "project_params": "Project Parameters",
-    "save": "Save",
-    "project_name": "Project Name",
-    "project_code": "Project Code",
-    "street": "Street",
-    "city": "City",
-    "province": "Province",
-    "year": "Year",
-    "ente": "Responsible Entity",
-    "ufficio": "Competent MiC Office",
-    "main_title": "US Sheet Manager",
-    "new_card": "New Sheet",
-    "edit_card": "Edit Sheet",
-    "delete_card": "Delete Sheet",
-    "editor_matrix": "Matrix Editor",
-    "export_csv": "Export CSV",
-    "export_matrix": "Export Matrix",
-    "tab1": "Registry",
-    "tab2": "Contents",
-    "tab3": "US Relations",
-    "tab4": "Notes",
-    "tab5": "Author",
-    "id": "ID",
-    "nr_us": "US No.",
-    "area_struttura": "Area/Structure",
-    "saggio": "Trench",
-    "settore": "Sector",
-    "quadrato": "Square",
-    "criteri_distinzione": "Distinction Criteria",
-    "componenti_organici": "Organic Components",
-    "componenti_inorganici": "Inorganic Components",
-    "consistenza": "Consistency (1-5)",
-    "colore": "Color",
-    "misure": "Measures",
-    "stato_conservazione": "Conservation State",
-    "copre": "Covers (comma-separated US)",
-    "uguale_a": "Equal to (comma-separated US)",
-    "coperto_da": "Covered by (comma-separated US)",
-    "si_lega_a": "Linked to (comma-separated US)",
-    "gli_si_appoggia": "Supported by (comma-separated US)",
-    "si_appoggia_a": "Supports (comma-separated US)",
-    "taglia": "Cuts (comma-separated US)",
-    "tagliato_da": "Cut by (comma-separated US)",
-    "riempie": "Fills (comma-separated US)",
-    "riempito_da": "Filled by (comma-separated US)",
-    "descrizione": "Description",
-    "osservazioni": "Notes",
-    "interpretazioni": "Interpretations",
-    "datazione": "Dating",
-    "elementi_datanti": "Dating Elements",
-    "data_rilevamento": "Survey Date",
-    "responsabile_compilazione": "Compiled by",
-    "edit_title": "Edit US Sheet",
-    "new_title": "New US Sheet"
-  },
-  "de": {
-    "project_params": "Projektparameter",
-    "save": "Speichern",
-    "project_name": "Projektname",
-    "project_code": "Projektcode",
-    "street": "Straße",
-    "city": "Stadt",
-    "province": "Bundesland",
-    "year": "Jahr",
-    "ente": "Verantwortliche Stelle",
-    "ufficio": "Zuständiges MiC-Büro",
-    "main_title": "US-Blattverwaltung",
-    "new_card": "Neues Blatt",
-    "edit_card": "Blatt bearbeiten",
-    "delete_card": "Blatt löschen",
-    "editor_matrix": "Matrix-Editor",
-    "export_csv": "CSV exportieren",
-    "export_matrix": "Matrix exportieren",
-    "tab1": "Stammdaten",
-    "tab2": "Inhalt",
-    "tab3": "US-Beziehungen",
-    "tab4": "Bemerkungen",
-    "tab5": "Autor",
-    "id": "ID",
-    "nr_us": "US-Nr.",
-    "area_struttura": "Bereich/Struktur",
-    "saggio": "Schnitt",
-    "settore": "Sektor",
-    "quadrato": "Quadrat",
-    "criteri_distinzione": "Unterscheidungskriterien",
-    "componenti_organici": "Organische Komponenten",
-    "componenti_inorganici": "Anorganische Komponenten",
-    "consistenza": "Konsistenz (1-5)",
-    "colore": "Farbe",
-    "misure": "Maße",
-    "stato_conservazione": "Erhaltungszustand",
-    "copre": "Deckt ab (US, durch Komma getrennt)",
-    "uguale_a": "Gleich wie (US, durch Komma getrennt)",
-    "coperto_da": "Bedeckt von (US, durch Komma getrennt)",
-    "si_lega_a": "Verbunden mit (US, durch Komma getrennt)",
-    "gli_si_appoggia": "Gestützt von (US, durch Komma getrennt)",
-    "si_appoggia_a": "Stützt (US, durch Komma getrennt)",
-    "taglia": "Schneidet (US, durch Komma getrennt)",
-    "tagliato_da": "Geschnitten von (US, durch Komma getrennt)",
-    "riempie": "Füllt (US, durch Komma getrennt)",
-    "riempito_da": "Gefüllt von (US, durch Komma getrennt)",
-    "descrizione": "Beschreibung",
-    "osservazioni": "Bemerkungen",
-    "interpretazioni": "Interpretationen",
-    "datazione": "Datierung",
-    "elementi_datanti": "Datierende Elemente",
-    "data_rilevamento": "Erhebungsdatum",
-    "responsabile_compilazione": "Verantwortlicher",
-    "edit_title": "US-Blatt bearbeiten",
-    "new_title": "Neues US-Blatt"
-  }
-}
-
-# Carica le traduzioni dal file esterno
-if os.path.exists(TRANSLATION_PATH):
-    with open(TRANSLATION_PATH, encoding="utf-8") as f:
-        TRANSLATIONS = json.load(f)
-else:
-    TRANSLATIONS = TRANSLATION_DEFAULT
-
-# Crea il file di traduzioni se non esiste
-if not os.path.exists(TRANSLATION_PATH):
-    with open(TRANSLATION_PATH, "w", encoding="utf-8") as f:
-        json.dump(TRANSLATION_DEFAULT, f, indent=2, ensure_ascii=False)
-
-# Funzione salva_scheda base
-def salva_scheda(scheda):
-    filename = f"US{scheda['id']}.json"
-    filepath = os.path.join(US_DIR, filename)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(scheda, f, indent=2, ensure_ascii=False)
-
-# Crea la root principale UNA SOLA VOLTA
-root = tk.Tk()
-root.withdraw()  # Nasconde la finestra principale finché non serve
-
-# Variabili globali per finestre aperte
-open_us_windows = {}
-open_matrix_window = [None]
-
-# Funzione per mostrare popup inserimento parametri progetto
-def T(key, lingua=None):
-    if lingua is None:
-        # Prova a leggere lingua da prog_manager.json
-        if os.path.exists(PROG_MANAGER_PATH):
-            with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-                prog_data = json.load(f)
-            lingua = prog_data.get("lingua", "it")
-        else:
-            lingua = "it"
-    return TRANSLATIONS.get(lingua, {}).get(key, key)
-
-def mostra_popup_parametri():
-    # Selezione lingua solo al primo avvio
-    if os.path.exists(PROG_MANAGER_PATH):
-        with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-            prog_data = json.load(f)
-        lingua = prog_data.get('lingua', None)
-    else:
-        lingua = None
-    if not lingua:
-        # Popup selezione lingua
-        lang_popup = tk.Toplevel(root)
-        lang_popup.title("Seleziona lingua / Select language / Sprache wählen")
-        lang_popup.grab_set()
-        tk.Label(lang_popup, text="Seleziona la lingua / Select language / Sprache wählen:").pack(padx=20, pady=10)
-        lang = tk.StringVar(value="it")
-        def set_lang(l):
-            lang.set(l)
-            lang_popup.destroy()
-        tk.Button(lang_popup, text="Italiano", width=15, command=lambda: set_lang("it")).pack(pady=5)
-        tk.Button(lang_popup, text="English", width=15, command=lambda: set_lang("en")).pack(pady=5)
-        tk.Button(lang_popup, text="Deutsch", width=15, command=lambda: set_lang("de")).pack(pady=5)
-        lang_popup.transient()
-        lang_popup.wait_window()
-        lingua = lang.get()
-        # Salva lingua in prog_manager.json
-        if not os.path.exists(PROG_MANAGER_PATH):
-            with open(PROG_MANAGER_PATH, "w", encoding="utf-8") as f:
-                json.dump({"lingua": lingua}, f, indent=4, ensure_ascii=False)
-    # Popup inserimento parametri progetto
-    popup = tk.Toplevel(root)
-    popup.title(T("project_params", lingua))
-    popup.grab_set()
-    labels = [
-        (T("project_name", lingua), "nome_progetto"),
-        (T("project_code", lingua), "codice_progetto"),
-        (T("street", lingua), "via"),
-        (T("city", lingua), "comune"),
-        (T("province", lingua), "provincia"),
-        (T("year", lingua), "anno"),
-        (T("ente", lingua), "ente_responsabile"),
-        (T("ufficio", lingua), "ufficio_mic")
-    ]
-    entries = {}
-    for i, (label, key) in enumerate(labels):
-        tk.Label(popup, text=label).grid(row=i, column=0, sticky="e")
-        entry = tk.Entry(popup, width=40)
-        entry.grid(row=i, column=1)
-        entries[key] = entry
-    def salva_parametri():
-        dati = {k: e.get() for k, e in entries.items()}
-        dati["lingua"] = lingua
-        with open(PROG_MANAGER_PATH, "w", encoding="utf-8") as f:
-            json.dump(dati, f, indent=4, ensure_ascii=False)
-        popup.destroy()
-        avvia_gui_principale()
-    btn_salva = tk.Button(popup, text=T("save", lingua), command=salva_parametri)
-    btn_salva.grid(row=len(labels), column=1, pady=10)
-    popup.protocol("WM_DELETE_WINDOW", lambda: None)  # Disabilita chiusura X
-    popup.transient()
-    popup.wait_window()
-
-# Variabile globale per elenco file
-file_labels = []
-
-def aggiorna_elenco(lingua=None):
-    global file_labels, elenco
-    if lingua is None:
-        if os.path.exists(PROG_MANAGER_PATH):
-            with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-                prog_data = json.load(f)
-            lingua = prog_data.get("lingua", "it")
-        else:
-            lingua = "it"
-    elenco.delete(0, tk.END)
-    file_labels = []
-    for filename in sorted(os.listdir(US_DIR)):
-        if filename.endswith(".json") and filename not in ("prog_manager.json", "positions.json"):
-            filepath = os.path.join(US_DIR, filename)
-            try:
-                with open(filepath, encoding="utf-8") as f:
-                    dati = json.load(f)
-                responsabile = dati.get("responsabile_compilazione", "-")
-                data_ril = dati.get("data_rilevamento", "-")
-                required_fields = [
-                    "nr_us", "area_struttura", "saggio", "settore", "quadrato",
-                    "criteri_distinzione", "componenti_organici", "componenti_inorganici",
-                    "consistenza", "colore", "misure", "stato_conservazione",
-                    "descrizione", "osservazioni", "interpretazioni", "datazione",
-                    "elementi_datanti", "data_rilevamento", "responsabile_compilazione"
-                ]
-                complete = all(str(dati.get(f, "")).strip() for f in required_fields)
-                stato = T("complete", lingua) if complete and "complete" in TRANSLATIONS[lingua] else ("COMPLETA" if complete else (T("partial", lingua) if "partial" in TRANSLATIONS[lingua] else "PARZIALE"))
-                label = f"{filename} | {responsabile} | {data_ril} | {stato}"
-                elenco.insert(tk.END, label)
-                file_labels.append(filename)
-                if not complete:
-                    elenco.itemconfig(tk.END, {'fg': 'orange'})
-                else:
-                    elenco.itemconfig(tk.END, {'fg': 'green'})
-            except Exception as e:
-                elenco.insert(tk.END, filename)
-                file_labels.append(filename)
-
-def apri_editor_scheda(dati=None, lingua=None):
-    if lingua is None:
-        if os.path.exists(PROG_MANAGER_PATH):
-            with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-                prog_data = json.load(f)
-            lingua = prog_data.get("lingua", "it")
-        else:
-            lingua = "it"
-    us_id = None
-    if dati and "id" in dati:
-        us_id = str(dati["id"])
-    if us_id and us_id in open_us_windows:
+# --- Helper Functions ---
+def load_json_file(filepath):
+    """Carica un file JSON in modo sicuro."""
+    if os.path.exists(filepath):
         try:
-            open_us_windows[us_id].lift()
-            open_us_windows[us_id].focus_force()
-        except:
-            pass
-        return
-    editor = tk.Toplevel(root)
-    if us_id:
-        open_us_windows[us_id] = editor
-    def on_close():
-        if us_id and us_id in open_us_windows:
-            del open_us_windows[us_id]
-        editor.destroy()
-    editor.protocol("WM_DELETE_WINDOW", on_close)
-    editor.title(T("edit_title", lingua) if dati else T("new_title", lingua))
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            messagebox.showerror("Errore JSON", f"Il file {os.path.basename(filepath)} è corrotto: {e}")
+            return {}
+        except Exception as e:
+            messagebox.showerror("Errore di Lettura", f"Errore durante la lettura di {os.path.basename(filepath)}: {e}")
+            return {}
+    return {}
 
-    from tkinter import ttk
-    notebook = ttk.Notebook(editor)
-    notebook.pack(fill="both", expand=True, padx=10, pady=10)
+def save_json_file(filepath, data):
+    """Salva i dati in un file JSON in modo sicuro."""
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        messagebox.showerror("Errore di Scrittura", f"Errore durante il salvataggio di {os.path.basename(filepath)}: {e}")
 
-    # --- TAB 1: Anagrafica ---
-    tab1 = tk.Frame(notebook)
-    notebook.add(tab1, text=T("tab1", lingua))
-    row = 0
-    tk.Label(tab1, text=T("id", lingua)).grid(row=row, column=0, sticky="e");
-    label_id = tk.Label(tab1, text="")
-    label_id.grid(row=row, column=1, sticky="w"); row+=1
-    tk.Label(tab1, text=T("nr_us", lingua)).grid(row=row, column=0, sticky="e"); entry_nr_us = tk.Entry(tab1); entry_nr_us.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("area_struttura", lingua)).grid(row=row, column=0, sticky="e"); entry_area = tk.Entry(tab1); entry_area.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("saggio", lingua)).grid(row=row, column=0, sticky="e"); entry_saggio = tk.Entry(tab1); entry_saggio.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("settore", lingua)).grid(row=row, column=0, sticky="e"); entry_settore = tk.Entry(tab1); entry_settore.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("quadrato", lingua)).grid(row=row, column=0, sticky="e"); entry_quadrato = tk.Entry(tab1); entry_quadrato.grid(row=row, column=1); row+=1
+class ProjectDialog(tk.Toplevel):
+    def __init__(self, master, on_save):
+        super().__init__(master)
+        self.title("Nuovo Progetto")
+        self.resizable(False, False)
+        self.on_save = on_save
 
-    # --- TAB 2: Cosa contiene ---
-    tab2 = tk.Frame(notebook)
-    notebook.add(tab2, text=T("tab2", lingua))
-    row = 0
-    tk.Label(tab2, text=T("criteri_distinzione", lingua)).grid(row=row, column=0, sticky="e"); entry_criteri = tk.Entry(tab2); entry_criteri.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("componenti_organici", lingua)).grid(row=row, column=0, sticky="e"); entry_org = tk.Entry(tab2); entry_org.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("componenti_inorganici", lingua)).grid(row=row, column=0, sticky="e"); entry_inorg = tk.Entry(tab2); entry_inorg.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("consistenza", lingua)).grid(row=row, column=0, sticky="e"); entry_consistenza = ttk.Combobox(tab2, values=[1,2,3,4,5], width=3); entry_consistenza.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("colore", lingua)).grid(row=row, column=0, sticky="e"); entry_colore = tk.Entry(tab2); entry_colore.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("misure", lingua)).grid(row=row, column=0, sticky="e"); entry_misure = tk.Entry(tab2); entry_misure.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("stato_conservazione", lingua)).grid(row=row, column=0, sticky="e"); entry_stato = tk.Entry(tab2); entry_stato.grid(row=row, column=1); row+=1
+        fields = [
+            ("Nome Progetto", "text"),
+            ("ID Progetto", "text"),
+            ("Via", "text"),
+            ("Comune", "text"),
+            ("Anno di inizio", "year"),
+            ("Archeologo progettista", "text"),
+            ("Direttore Lavori", "text"),
+            ("Responsabile scientifico", "text"),
+            ("Ente responsabile", "text"),
+            ("Organo ministeriale territoriale", "text"),
+        ]
+        self.entries = {}
 
-    # --- TAB 3: Relazioni US ---
-    tab3 = tk.Frame(notebook)
-    notebook.add(tab3, text=T("tab3", lingua))
-    row = 0
-    tk.Label(tab3, text=T("copre", lingua)).grid(row=row, column=0, sticky="e"); entry_copre = tk.Entry(tab3); entry_copre.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("uguale_a", lingua)).grid(row=row, column=0, sticky="e"); entry_uguale_a = tk.Entry(tab3); entry_uguale_a.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("coperto_da", lingua)).grid(row=row, column=0, sticky="e"); entry_coperto_da = tk.Entry(tab3); entry_coperto_da.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("si_lega_a", lingua)).grid(row=row, column=0, sticky="e"); entry_si_lega_a = tk.Entry(tab3); entry_si_lega_a.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("gli_si_appoggia", lingua)).grid(row=row, column=0, sticky="e"); entry_gli_si_appoggia = tk.Entry(tab3); entry_gli_si_appoggia.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("si_appoggia_a", lingua)).grid(row=row, column=0, sticky="e"); entry_si_appoggia_a = tk.Entry(tab3); entry_si_appoggia_a.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("taglia", lingua)).grid(row=row, column=0, sticky="e"); entry_taglia = tk.Entry(tab3); entry_taglia.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("tagliato_da", lingua)).grid(row=row, column=0, sticky="e"); entry_tagliato_da = tk.Entry(tab3); entry_tagliato_da.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("riempie", lingua)).grid(row=row, column=0, sticky="e"); entry_riempie = tk.Entry(tab3); entry_riempie.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("riempito_da", lingua)).grid(row=row, column=0, sticky="e"); entry_riempito_da = tk.Entry(tab3); entry_riempito_da.grid(row=row, column=1); row+=1
+        for i, (label, typ) in enumerate(fields):
+            tk.Label(self, text=label).grid(row=i, column=0, sticky="e", padx=5, pady=3)
+            if typ == "year":
+                entry = ttk.Entry(self, width=10)
+                entry.grid(row=i, column=1, padx=5, pady=3)
+                entry.config(validate="key", validatecommand=(self.register(self.validate_year), "%P"))
+            else:
+                entry = ttk.Entry(self, width=30)
+                entry.grid(row=i, column=1, padx=5, pady=3)
+            self.entries[label] = entry
 
-    # --- TAB 4: Osservazioni ---
-    tab4 = tk.Frame(notebook)
-    notebook.add(tab4, text=T("tab4", lingua))
-    row = 0
-    tk.Label(tab4, text=T("descrizione", lingua)).grid(row=row, column=0, sticky="ne"); text_descrizione = tk.Text(tab4, width=40, height=3); text_descrizione.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("osservazioni", lingua)).grid(row=row, column=0, sticky="ne"); text_osservazioni = tk.Text(tab4, width=40, height=2); text_osservazioni.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("interpretazioni", lingua)).grid(row=row, column=0, sticky="ne"); text_interpretazioni = tk.Text(tab4, width=40, height=2); text_interpretazioni.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("datazione", lingua)).grid(row=row, column=0, sticky="e"); entry_datazione = tk.Entry(tab4); entry_datazione.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("elementi_datanti", lingua)).grid(row=row, column=0, sticky="e"); entry_elementi = tk.Entry(tab4); entry_elementi.grid(row=row, column=1); row+=1
+        save_btn = ttk.Button(self, text="\U0001F4BE Salva", command=self.save)
+        save_btn.grid(row=len(fields), column=0, columnspan=2, pady=10)
 
-    # --- TAB 5: Autore ---
-    tab5 = tk.Frame(notebook)
-    notebook.add(tab5, text=T("tab5", lingua))
-    row = 0
-    tk.Label(tab5, text=T("data_rilevamento", lingua)).grid(row=row, column=0, sticky="e"); entry_data_ril = tk.Entry(tab5); entry_data_ril.grid(row=row, column=1); row+=1
-    tk.Label(tab5, text=T("responsabile_compilazione", lingua)).grid(row=row, column=0, sticky="e"); entry_responsabile = tk.Entry(tab5); entry_responsabile.grid(row=row, column=1); row+=1
+    def validate_year(self, value):
+        return value.isdigit() and (len(value) <= 4)
 
-    # Precompila i campi se modifica
-    if dati:
-        label_id.config(text=str(dati.get("id", "")))
-        entry_nr_us.insert(0, str(dati.get("nr_us", "")))
-        entry_area.insert(0, dati.get("area_struttura", ""))
-        entry_saggio.insert(0, dati.get("saggio", ""))
-        entry_settore.insert(0, dati.get("settore", ""))
-        entry_quadrato.insert(0, dati.get("quadrato", ""))
-        entry_criteri.insert(0, dati.get("criteri_distinzione", ""))
-        entry_org.insert(0, dati.get("componenti_organici", ""))
-        entry_inorg.insert(0, dati.get("componenti_inorganici", ""))
-        entry_consistenza.set(dati.get("consistenza", ""))
-        entry_colore.insert(0, dati.get("colore", ""))
-        entry_misure.insert(0, dati.get("misure", ""))
-        entry_stato.insert(0, dati.get("stato_conservazione", ""))
-        entry_copre.insert(0, ",".join(str(n) for n in dati.get("copre", [])))
-        entry_uguale_a.insert(0, ",".join(str(n) for n in dati.get("uguale_a", [])))
-        entry_coperto_da.insert(0, ",".join(str(n) for n in dati.get("coperto_da", [])))
-        entry_si_lega_a.insert(0, ",".join(str(n) for n in dati.get("si_lega_a", [])))
-        entry_gli_si_appoggia.insert(0, ",".join(str(n) for n in dati.get("gli_si_appoggia", [])))
-        entry_si_appoggia_a.insert(0, ",".join(str(n) for n in dati.get("si_appoggia_a", [])))
-        entry_taglia.insert(0, ",".join(str(n) for n in dati.get("taglia", [])))
-        entry_tagliato_da.insert(0, ",".join(str(n) for n in dati.get("tagliato_da", [])))
-        entry_riempie.insert(0, ",".join(str(n) for n in dati.get("riempie", [])))
-        entry_riempito_da.insert(0, ",".join(str(n) for n in dati.get("riempito_da", [])))
-        text_descrizione.insert("1.0", dati.get("descrizione", ""))
-        text_osservazioni.insert("1.0", dati.get("osservazioni", ""))
-        text_interpretazioni.insert("1.0", dati.get("interpretazioni", ""))
-        entry_datazione.insert(0, dati.get("datazione", ""))
-        entry_elementi.insert(0, dati.get("elementi_datanti", ""))
-        entry_data_ril.insert(0, dati.get("data_rilevamento", ""))
-        entry_responsabile.insert(0, dati.get("responsabile_compilazione", ""))
-    else:
-        # Calcola nuovo ID automatico
-        try:
-            us_files = [f for f in os.listdir(US_DIR) if f.endswith('.json') and f != 'prog_manager.json']
-            max_id = 0
-            for f in us_files:
-                with open(os.path.join(US_DIR, f), encoding="utf-8") as ff:
-                    d = json.load(ff)
-                    if "id" in d:
-                        try:
-                            max_id = max(max_id, int(d["id"]))
-                        except:
-                            pass
-            nuovo_id = max_id + 1
-        except:
-            nuovo_id = 1
-        label_id.config(text=str(nuovo_id))
-
-    def salva():
-        try:
-            nr_us = int(entry_nr_us.get())
-        except:
-            messagebox.showerror(T("error", lingua) if "error" in TRANSLATIONS[lingua] else "Errore", T("invalid_us_number", lingua) if "invalid_us_number" in TRANSLATIONS[lingua] else "Numero US non valido.")
+    def save(self):
+        data = {label: entry.get().strip() for label, entry in self.entries.items()}
+        if not all(data.values()):
+            messagebox.showerror("Errore", "Compila tutti i campi.")
             return
-        if dati:
-            id_val = dati.get("id", label_id.cget("text"))
-        else:
-            id_val = label_id.cget("text")
-        try:
-            copre = [int(x.strip()) for x in entry_copre.get().split(",") if x.strip()]
-            uguale_a = [int(x.strip()) for x in entry_uguale_a.get().split(",") if x.strip()]
-            coperto_da = [int(x.strip()) for x in entry_coperto_da.get().split(",") if x.strip()]
-            si_lega_a = [int(x.strip()) for x in entry_si_lega_a.get().split(",") if x.strip()]
-            gli_si_appoggia = [int(x.strip()) for x in entry_gli_si_appoggia.get().split(",") if x.strip()]
-            si_appoggia_a = [int(x.strip()) for x in entry_si_appoggia_a.get().split(",") if x.strip()]
-            taglia = [int(x.strip()) for x in entry_taglia.get().split(",") if x.strip()]
-            tagliato_da = [int(x.strip()) for x in entry_tagliato_da.get().split(",") if x.strip()]
-            riempie = [int(x.strip()) for x in entry_riempie.get().split(",") if x.strip()]
-            riempito_da = [int(x.strip()) for x in entry_riempito_da.get().split(",") if x.strip()]
-        except:
-            messagebox.showerror(T("error", lingua) if "error" in TRANSLATIONS[lingua] else "Errore", T("relations_must_be_numbers", lingua) if "relations_must_be_numbers" in TRANSLATIONS[lingua] else "Le relazioni devono essere numeri separati da virgole.")
+        self.on_save(data)
+        self.destroy()
+
+def ensure_project_file():
+    project_path = os.path.join("manager", "project.py")
+    root = tk.Tk()
+    root.withdraw()
+    project_created = False
+    if not os.path.exists(project_path):
+        def save_project(data):
+            nonlocal project_created
+            os.makedirs("manager", exist_ok=True)
+            with open(project_path, "w", encoding="utf-8") as f:
+                for k, v in data.items():
+                    f.write(f"{k.replace(' ', '_').lower()} = {repr(v)}\n")
+            messagebox.showinfo("Salvato", "Dati del progetto salvati.")
+            project_created = True
+        d = ProjectDialog(root, save_project)
+        root.wait_window(d)
+    else:
+        project_created = True
+    root.destroy()
+    return project_created
+
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tipwindow = None
+        widget.bind("<Enter>", self.show_tip)
+        widget.bind("<Leave>", self.hide_tip)
+
+    def show_tip(self, event=None):
+        if self.tipwindow or not self.text:
             return
-        scheda = {
-            "id": id_val,
-            "nr_us": nr_us,
-            "area_struttura": entry_area.get(),
-            "saggio": entry_saggio.get(),
-            "settore": entry_settore.get(),
-            "quadrato": entry_quadrato.get(),
-            "criteri_distinzione": entry_criteri.get(),
-            "componenti_organici": entry_org.get(),
-            "componenti_inorganici": entry_inorg.get(),
-            "consistenza": entry_consistenza.get(),
-            "colore": entry_colore.get(),
-            "misure": entry_misure.get(),
-            "stato_conservazione": entry_stato.get(),
-            "copre": copre,
-            "uguale_a": uguale_a,
-            "coperto_da": coperto_da,
-            "si_lega_a": si_lega_a,
-            "gli_si_appoggia": gli_si_appoggia,
-            "si_appoggia_a": si_appoggia_a,
-            "taglia": taglia,
-            "tagliato_da": tagliato_da,
-            "riempie": riempie,
-            "riempito_da": riempito_da,
-            "descrizione": text_descrizione.get("1.0", "end").strip(),
-            "osservazioni": text_osservazioni.get("1.0", "end").strip(),
-            "interpretazioni": text_interpretazioni.get("1.0", "end").strip(),
-            "datazione": entry_datazione.get(),
-            "elementi_datanti": entry_elementi.get(),
-            "data_rilevamento": entry_data_ril.get(),
-            "responsabile_compilazione": entry_responsabile.get()
+        try:
+            x, y, _, cy = self.widget.bbox("insert")
+        except Exception:
+            x, y, cy = 0, 0, 0
+        x = x + self.widget.winfo_rootx() + 25
+        y = y + cy + self.widget.winfo_rooty() + 20
+        self.tipwindow = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(tw, text=self.text, background="#ffffe0", relief="solid", borderwidth=1)
+        label.pack(ipadx=4)
+
+    def hide_tip(self, event=None):
+        tw = self.tipwindow
+        self.tipwindow = None
+        if tw:
+            tw.destroy()
+
+def load_project_data():
+    project_path = os.path.join("manager", "project.py")
+    data = {}
+    if os.path.exists(project_path):
+        with open(project_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    try:
+                        data[k.strip()] = ast.literal_eval(v.strip())
+                    except (ValueError, SyntaxError):
+                        data[k.strip()] = v.strip()
+    return data
+
+def get_next_id():
+    folder = "su_report"
+    if not os.path.exists(folder):
+        return 1
+    files = [f for f in os.listdir(folder) if f.lower().endswith(".json")]
+    return len(files) + 1
+
+def list_su_reports(exclude_filename=None):
+    folder = "su_report"
+    if not os.path.exists(folder):
+        return []
+    files = [f for f in os.listdir(folder) if f.lower().endswith(".json")]
+    if exclude_filename:
+        files = [f for f in files if f != exclude_filename]
+    return sorted([os.path.splitext(f)[0] for f in files])
+
+CUSTOM_FIELDS_PATH = os.path.join("manager", "custom_fields.json")
+
+def load_custom_fields():
+    return load_json_file(CUSTOM_FIELDS_PATH)
+
+def save_custom_fields(fields_data):
+    os.makedirs("manager", exist_ok=True)
+    save_json_file(CUSTOM_FIELDS_PATH, fields_data)
+
+class CustomFieldsDialog(tk.Toplevel):
+    def __init__(self, master, app_instance):
+        super().__init__(master)
+        self.title("Configura Campi Personalizzati")
+        self.resizable(False, False)
+        self.app_instance = app_instance
+        self.custom_fields = load_custom_fields()
+        
+        self.create_widgets()
+        self.populate_list()
+
+    def create_widgets(self):
+        input_frame = ttk.LabelFrame(self, text="Nuovo Campo Personalizzato")
+        input_frame.pack(padx=10, pady=5, fill="x")
+
+        tk.Label(input_frame, text="Nome Campo:").grid(row=0, column=0, padx=5, pady=2, sticky="e")
+        self.field_name_entry = ttk.Entry(input_frame, width=30)
+        self.field_name_entry.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+
+        tk.Label(input_frame, text="Tipo:").grid(row=1, column=0, padx=5, pady=2, sticky="e")
+        self.field_type_var = tk.StringVar()
+        self.field_type_combobox = ttk.Combobox(input_frame, textvariable=self.field_type_var, 
+                                                 values=["Testo", "Numerico", "Dropdown", "Checkbox"],
+                                                 state="readonly", width=27)
+        self.field_type_combobox.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
+        self.field_type_combobox.bind("<<ComboboxSelected>>", self._on_type_selected)
+
+        self.dropdown_options_label = tk.Label(input_frame, text="Opzioni (se Dropdown, separate da virgola):")
+        self.dropdown_options_entry = ttk.Entry(input_frame, width=30)
+
+        self.add_button = ttk.Button(input_frame, text="Aggiungi Campo", command=self.add_field)
+        self.add_button.grid(row=2, column=0, columnspan=2, pady=5)
+
+        list_frame = ttk.LabelFrame(self, text="Campi Esistenti")
+        list_frame.pack(padx=10, pady=5, fill="both", expand=True)
+
+        columns = ("Nome Campo", "Tipo")
+        self.tree = ttk.Treeview(list_frame, columns=columns, show="headings")
+        for col in columns:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=150, anchor="center")
+        self.tree.pack(side="left", fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        self.delete_button = ttk.Button(self, text="Elimina Campo Selezionato", command=self.delete_field)
+        self.delete_button.pack(pady=5)
+        
+        self._on_type_selected()
+
+    def _on_type_selected(self, event=None):
+        if self.field_type_var.get() == "Dropdown":
+            self.dropdown_options_label.grid(row=3, column=0, padx=5, pady=2, sticky="e")
+            self.dropdown_options_entry.grid(row=3, column=1, padx=5, pady=2, sticky="ew")
+            self.add_button.grid(row=4, column=0, columnspan=2, pady=5)
+        else:
+            self.dropdown_options_label.grid_forget()
+            self.dropdown_options_entry.grid_forget()
+            self.add_button.grid(row=2, column=0, columnspan=2, pady=5)
+
+    def populate_list(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        for field in self.custom_fields:
+            name = field["name"]
+            field_type = field["type"]
+            self.tree.insert("", "end", values=(name, field_type))
+
+    def add_field(self):
+        name = self.field_name_entry.get().strip()
+        field_type = self.field_type_var.get()
+        options = []
+
+        if not name or not field_type:
+            messagebox.showerror("Errore", "Nome e tipo del campo sono obbligatori.")
+            return
+        
+        if any(f["name"] == name for f in self.custom_fields):
+            messagebox.showerror("Errore", "Un campo con questo nome esiste già.")
+            return
+
+        if field_type == "Dropdown":
+            options_str = self.dropdown_options_entry.get().strip()
+            if not options_str:
+                messagebox.showerror("Errore", "Le opzioni sono obbligatorie per il tipo Dropdown.")
+                return
+            options = [opt.strip() for opt in options_str.split(',') if opt.strip()]
+
+        new_field = {"name": name, "type": field_type}
+        if options:
+            new_field["options"] = options
+
+        self.custom_fields.append(new_field)
+        save_custom_fields(self.custom_fields)
+        self.populate_list()
+        self.field_name_entry.delete(0, tk.END)
+        self.field_type_var.set("")
+        self.dropdown_options_entry.delete(0, tk.END)
+        messagebox.showinfo("Successo", f"Campo '{name}' aggiunto.")
+
+    def delete_field(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showerror("Errore", "Seleziona un campo da eliminare.")
+            return
+
+        item_values = self.tree.item(selected_item[0], "values")
+        field_name_to_delete = item_values[0]
+
+        confirm = messagebox.askyesno("Conferma Eliminazione", f"Sei sicuro di voler eliminare il campo '{field_name_to_delete}'? Questa azione non elimina i dati già salvati nelle schede esistenti, ma il campo non sarà più modificabile.")
+        if confirm:
+            self.custom_fields = [f for f in self.custom_fields if f["name"] != field_name_to_delete]
+            save_custom_fields(self.custom_fields)
+            self.populate_list()
+            messagebox.showinfo("Successo", f"Campo '{field_name_to_delete}' eliminato.")
+        
+        self.app_instance.refresh_treeview()
+
+class USCardDialog(tk.Toplevel):
+    def __init__(self, master, project_data, existing_data=None):
+        super().__init__(master)
+        self.title("Nuova Scheda US" if existing_data is None else "Modifica Scheda US")
+        self.resizable(False, False)
+        self.project_data = project_data
+        self.existing_data = existing_data
+        self.original_filename = None
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.notebook = ttk.Notebook(self)
+        self.notebook.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        tab1 = ttk.Frame(self.notebook)
+        self.notebook.add(tab1, text="Dati Iniziali")
+        row = 0
+        self.fields = {}
+        tk.Label(tab1, text="ID").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        display_id = str(existing_data.get("ID", get_next_id())) if existing_data else str(get_next_id())
+        self.fields["ID"] = tk.Label(tab1, text=display_id)
+        self.fields["ID"].grid(row=row, column=1, sticky="w", padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Nome Progetto").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.fields["Nome Progetto"] = tk.Label(tab1, text=project_data.get("project_name", ""))
+        self.fields["Nome Progetto"].grid(row=row, column=1, sticky="w", padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="ID Progetto").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.fields["ID Progetto"] = tk.Label(tab1, text=project_data.get("project_id", ""))
+        self.fields["ID Progetto"].grid(row=row, column=1, sticky="w", padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Numero US").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.us_number_var = tk.StringVar()
+        entry_us_num = ttk.Entry(tab1, textvariable=self.us_number_var)
+        entry_us_num.grid(row=row, column=1, padx=5, pady=2)
+        entry_us_num.config(validate="key", validatecommand=(self.register(self.validate_integer_input), "%P"))
+        row += 1
+        tk.Label(tab1, text="Tipo").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.type_var = tk.StringVar()
+        type_options = ["SU", "SU Muraria", "SU Rivestimento", "SU Documentaria", "SU Virtuale strutturale", "SU Virtuale non strutturale"]
+        ttk.Combobox(tab1, textvariable=self.type_var, values=type_options, state="readonly").grid(row=row, column=1, padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Negativa").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.negative_var = BooleanVar()
+        ttk.Checkbutton(tab1, variable=self.negative_var).grid(row=row, column=1, sticky="w", padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Area").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.area_var = tk.StringVar()
+        ttk.Entry(tab1, textvariable=self.area_var).grid(row=row, column=1, padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Indagini archeologiche preliminari").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.prelim_var = tk.StringVar()
+        ttk.Entry(tab1, textvariable=self.prelim_var).grid(row=row, column=1, padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Settore").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.sector_var = tk.StringVar()
+        ttk.Entry(tab1, textvariable=self.sector_var).grid(row=row, column=1, padx=5, pady=2)
+        row += 1
+        tk.Label(tab1, text="Quadrato").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        self.square_var = tk.StringVar()
+        ttk.Entry(tab1, textvariable=self.square_var).grid(row=row, column=1, padx=5, pady=2)
+
+        tab2 = ttk.Frame(self.notebook)
+        self.notebook.add(tab2, text="Contenuto")
+        row2 = 0
+        tk.Label(tab2, text="Criteri di distinzione").grid(row=row2, column=0, sticky="e", padx=5, pady=2)
+        self.distinction_var = tk.StringVar()
+        ttk.Entry(tab2, textvariable=self.distinction_var).grid(row=row2, column=1, padx=5, pady=2)
+        row2 += 1
+        tk.Label(tab2, text="Componenti organiche").grid(row=row2, column=0, sticky="e", padx=5, pady=2)
+        self.organic_var = tk.StringVar()
+        ttk.Entry(tab2, textvariable=self.organic_var).grid(row=row2, column=1, padx=5, pady=2)
+        row2 += 1
+        tk.Label(tab2, text="Componenti inorganiche").grid(row=row2, column=0, sticky="e", padx=5, pady=2)
+        self.inorganic_var = tk.StringVar()
+        ttk.Entry(tab2, textvariable=self.inorganic_var).grid(row=row2, column=1, padx=5, pady=2)
+        row2 += 1
+        tk.Label(tab2, text="Consistenza").grid(row=row2, column=0, sticky="e", padx=5, pady=2)
+        self.consistency_var = tk.StringVar()
+        ttk.Combobox(tab2, textvariable=self.consistency_var, values=[str(i) for i in range(1,6)], state="readonly").grid(row=row2, column=1, padx=5, pady=2)
+        row2 += 1
+        tk.Label(tab2, text="Colore").grid(row=row2, column=0, sticky="e", padx=5, pady=2)
+        self.color_var = tk.StringVar()
+        ttk.Entry(tab2, textvariable=self.color_var).grid(row=row2, column=1, padx=5, pady=2)
+        row2 += 1
+        tk.Label(tab2, text="Misure").grid(row=row2, column=0, sticky="e", padx=5, pady=2)
+        self.measures_var = tk.StringVar()
+        ttk.Entry(tab2, textvariable=self.measures_var).grid(row=row2, column=1, padx=5, pady=2)
+
+        tab3 = ttk.Frame(self.notebook)
+        self.notebook.add(tab3, text="Rapporti")
+        full_frame = ttk.LabelFrame(tab3, text="Rapporti Completi")
+        full_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        full_fields = ["Copre (US separate da virgola)", "Coperto da (US separate da virgola)", "Uguale a (US separate da virgola)", "Si lega a (US separate da virgola)", "Si appoggia a (US separate da virgola)", "Taglia (US separate da virgola)", "Tagliato da (US separate da virgola)", "Riempie (US separate da virgola)", "Riempito da (US separate da virgola)"]
+        self.full_relations_vars = {}
+        for i, label in enumerate(full_fields):
+            tk.Label(full_frame, text=label).grid(row=i, column=0, sticky="e", padx=3, pady=2)
+            var = tk.StringVar()
+            ttk.Entry(full_frame, textvariable=var, width=30).grid(row=i, column=1, padx=3, pady=2)
+            self.full_relations_vars[label] = var
+        simple_frame = ttk.LabelFrame(tab3, text="Rapporti Semplificati")
+        simple_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        simple_fields = [("Copre (US multiple)", "Copre"), ("Coperto da (US multiple)", "Coperto da")]
+        self.simplified_relations_vars = {}
+        for i, (label, key) in enumerate(simple_fields):
+            tk.Label(simple_frame, text=label).grid(row=i, column=0, sticky="e", padx=3, pady=2)
+            var = tk.StringVar()
+            entry = ttk.Entry(simple_frame, textvariable=var, width=28)
+            entry.grid(row=i, column=1, padx=3, pady=2, sticky="ew")
+            self.simplified_relations_vars[key] = var
+            select_btn = ttk.Button(simple_frame, text="...", width=3, command=lambda v=var: self.open_su_selection_dialog(v))
+            select_btn.grid(row=i, column=2, padx=(0, 3), pady=2, sticky="w")
+
+        tab4 = ttk.Frame(self.notebook)
+        self.notebook.add(tab4, text="Osservazioni")
+        tk.Label(tab4, text="Descrizione").grid(row=0, column=0, sticky="ne", padx=5, pady=2)
+        self.description_text = tk.Text(tab4, height=2.5, width=40)
+        self.description_text.grid(row=0, column=1, padx=5, pady=2)
+        row_obs = 1
+        tk.Label(tab4, text="Osservazioni").grid(row=row_obs, column=0, sticky="ne", padx=5, pady=2)
+        self.observations_text = tk.Text(tab4, height=2.5, width=40)
+        self.observations_text.grid(row=row_obs, column=1, padx=5, pady=2)
+        row_obs += 1
+        tk.Label(tab4, text="Interpretazioni").grid(row=row_obs, column=0, sticky="ne", padx=5, pady=2)
+        self.interpretations_text = tk.Text(tab4, height=2.5, width=40)
+        self.interpretations_text.grid(row=row_obs, column=1, padx=5, pady=2)
+        row_obs += 1
+        tk.Label(tab4, text="Contesto cronologico").grid(row=row_obs, column=0, sticky="e", padx=5, pady=2)
+        self.cronological_context_var = tk.StringVar()
+        ttk.Entry(tab4, textvariable=self.cronological_context_var).grid(row=row_obs, column=1, padx=5, pady=2)
+        row_obs += 1
+        tk.Label(tab4, text="Datazione").grid(row=row_obs, column=0, sticky="e", padx=5, pady=2)
+        self.dating_var = tk.StringVar()
+        ttk.Entry(tab4, textvariable=self.dating_var).grid(row=row_obs, column=1, padx=5, pady=2)
+        row_obs += 1
+        tk.Label(tab4, text="Elementi di datazione").grid(row=row_obs, column=0, sticky="ne", padx=5, pady=2)
+        self.dating_elements_text = tk.Text(tab4, height=2.5, width=40)
+        self.dating_elements_text.grid(row=row_obs, column=1, padx=5, pady=2)
+        row_obs += 1
+
+        tab5 = ttk.Frame(self.notebook)
+        self.notebook.add(tab5, text="Autore")
+        row_tab5 = 0
+        tk.Label(tab5, text="Responsabile scientifico").grid(row=row_tab5, column=0, sticky="e", padx=5, pady=2)
+        self.fields["Responsabile scientifico"] = tk.Label(tab5, text=project_data.get("scientific_manager", ""))
+        self.fields["Responsabile scientifico"].grid(row=row_tab5, column=1, sticky="w", padx=5, pady=2)
+        row_tab5 += 1
+        tk.Label(tab5, text="Autore scheda").grid(row=row_tab5, column=0, sticky="e", padx=5, pady=2)
+        self.report_author_var = tk.StringVar()
+        ttk.Entry(tab5, textvariable=self.report_author_var).grid(row=row_tab5, column=1, padx=5, pady=2)
+        row_tab5 += 1
+        tk.Label(tab5, text="Data").grid(row=row_tab5, column=0, sticky="e", padx=5, pady=2)
+        self.date_var = tk.StringVar()
+        ttk.Entry(tab5, textvariable=self.date_var).grid(row=row_tab5, column=1, padx=5, pady=2)
+        row_tab5 += 1
+
+        self.custom_fields_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.custom_fields_tab, text="Campi Personalizzati")
+        self.custom_field_vars = {}
+        self._load_and_create_custom_fields()
+
+        if self.existing_data:
+            self.populate_fields()
+            type_map_reverse = {"": "SU", "M": "SU Muraria", "R": "SU Rivestimento", "D": "SU Documentaria", "V_s": "SU Virtuale strutturale", "V_n": "SU Virtuale non strutturale"}
+            us_num = self.existing_data.get("SU number")
+            us_type = self.existing_data.get("Type")
+            negative = self.existing_data.get("Negative", False)
+            type_code_rev = ""
+            for code, name in type_map_reverse.items():
+                if name == us_type:
+                    type_code_rev = code
+                    break
+            negative_code_rev = "-" if negative else ""
+            self.original_filename = f"US{type_code_rev}{negative_code_rev}{us_num}.json"
+
+        save_btn = ttk.Button(self, text="\U0001F4BE Salva", command=self.save_card)
+        save_btn.grid(row=1, column=0, pady=10)
+
+    def validate_integer_input(self, value):
+        return value.isdigit() or value == ""
+        
+    def _load_and_create_custom_fields(self):
+        custom_fields_data = load_custom_fields()
+        current_row = 0
+        for field_def in custom_fields_data:
+            field_name = field_def["name"]
+            field_type = field_def["type"]
+            tk.Label(self.custom_fields_tab, text=field_name + ":").grid(row=current_row, column=0, sticky="e", padx=5, pady=2)
+            if field_type == "Testo":
+                var = tk.StringVar()
+                ttk.Entry(self.custom_fields_tab, textvariable=var, width=30).grid(row=current_row, column=1, padx=5, pady=2, sticky="ew")
+                self.custom_field_vars[field_name] = var
+            elif field_type == "Numerico":
+                var = tk.StringVar()
+                entry = ttk.Entry(self.custom_fields_tab, textvariable=var, width=30)
+                entry.grid(row=current_row, column=1, padx=5, pady=2, sticky="ew")
+                entry.config(validate="key", validatecommand=(self.register(self.validate_integer_input), "%P"))
+                self.custom_field_vars[field_name] = var
+            elif field_type == "Dropdown":
+                var = tk.StringVar()
+                options = field_def.get("options", [])
+                ttk.Combobox(self.custom_fields_tab, textvariable=var, values=options, state="readonly", width=27).grid(row=current_row, column=1, padx=5, pady=2, sticky="ew")
+                self.custom_field_vars[field_name] = var
+            elif field_type == "Checkbox":
+                var = BooleanVar()
+                ttk.Checkbutton(self.custom_fields_tab, variable=var).grid(row=current_row, column=1, padx=5, pady=2, sticky="w")
+                self.custom_field_vars[field_name] = var
+            current_row += 1
+
+    def open_su_selection_dialog(self, target_entry_var):
+        dialog = tk.Toplevel(self)
+        dialog.title("Seleziona US")
+        dialog.transient(self)
+        dialog.grab_set()
+        available_sus = list_su_reports(exclude_filename=self.original_filename)
+        available_sus_display = sorted([os.path.splitext(f)[0] for f in available_sus])
+        current_selection_list = [s.strip() for s in target_entry_var.get().split(',') if s.strip()]
+        self.su_checkbox_vars = {}
+        row_num = 0
+        for su_display_name in available_sus_display:
+            var = tk.BooleanVar()
+            if su_display_name in current_selection_list:
+                var.set(True)
+            ttk.Checkbutton(dialog, text=su_display_name, variable=var).grid(row=row_num, column=0, sticky="w", padx=5, pady=2)
+            self.su_checkbox_vars[su_display_name] = var
+            row_num += 1
+        def on_ok():
+            selected_sus = [su_name for su_name, var in self.su_checkbox_vars.items() if var.get()]
+            target_entry_var.set(", ".join(selected_sus))
+            dialog.destroy()
+        ttk.Button(dialog, text="OK", command=on_ok).grid(row=row_num, column=0, pady=10)
+        ttk.Button(dialog, text="Annulla", command=dialog.destroy).grid(row=row_num, column=1, pady=10)
+        self.wait_window(dialog)
+
+    def save_card(self):
+        us_num_val = self.us_number_var.get()
+        if not us_num_val.isdigit():
+            messagebox.showerror("Errore", "Il numero US deve essere un intero.")
+            return
+        if not self.type_var.get():
+            messagebox.showerror("Errore", "Il tipo è obbligatorio.")
+            return
+        custom_fields_data = load_custom_fields()
+        for field_def in custom_fields_data:
+            if field_def["type"] == "Numerico":
+                field_name = field_def["name"]
+                var = self.custom_field_vars.get(field_name)
+                if var and var.get() and not var.get().isdigit():
+                    messagebox.showerror("Errore di input", f"Il campo '{field_name}' deve essere un numero intero.")
+                    return
+        type_map = {"SU": "", "SU Muraria": "M", "SU Rivestimento": "R", "SU Documentaria": "D", "SU Virtuale strutturale": "V_s", "SU Virtuale non strutturale": "V_n"}
+        type_code = type_map.get(self.type_var.get(), "")
+        negative_code = "-" if self.negative_var.get() else ""
+        us_number = self.us_number_var.get()
+        new_filename = f"US{type_code}{negative_code}{us_number}.json"
+        new_filepath = os.path.join("su_report", new_filename)
+        data = {
+            "ID": int(self.fields["ID"].cget("text")),
+            "Nome Progetto": self.fields["Nome Progetto"].cget("text"),
+            "ID Progetto": self.fields["ID Progetto"].cget("text"),
+            "SU number": int(us_number),
+            "Type": self.type_var.get(),
+            "Negative": self.negative_var.get(),
+            "Area": self.area_var.get(),
+            "Preliminary archaeological investigations": self.prelim_var.get(),
+            "Sector": self.sector_var.get(),
+            "Square": self.square_var.get(),
+            "Distinction criteria": self.distinction_var.get(),
+            "Organic components": self.organic_var.get(),
+            "Inorganic components": self.inorganic_var.get(),
+            "Consistency": self.consistency_var.get(),
+            "Color": self.color_var.get(),
+            "Measures": self.measures_var.get(),
+            "Full Relations": {k: v.get() for k, v in self.full_relations_vars.items()},
+            "Simplified Relations": {k: v.get() for k, v in self.simplified_relations_vars.items()},
+            "Description": self.description_text.get("1.0", tk.END).strip(),
+            "Observations": self.observations_text.get("1.0", tk.END).strip(),
+            "Interpretations": self.interpretations_text.get("1.0", tk.END).strip(),
+            "Cronological context": self.cronological_context_var.get(),
+            "Dating": self.dating_var.get(),
+            "Dating elements": self.dating_elements_text.get("1.0", tk.END).strip(),
+            "Scientific manager": self.fields["Responsabile scientifico"].cget("text"),
+            "Report author": self.report_author_var.get(),
+            "Date": self.date_var.get(),
+            "Custom Fields": {k: v.get() for k, v in self.custom_field_vars.items()}
         }
-        salva_scheda(scheda)
-        messagebox.showinfo(T("saved", lingua) if "saved" in TRANSLATIONS[lingua] else "Salvato", f"{T('card', lingua) if 'card' in TRANSLATIONS[lingua] else 'Scheda'} US[{nr_us}] {'aggiornata' if dati else 'creata'}.")
-        aggiorna_elenco(lingua=lingua)
-        editor.destroy()
-
-    tk.Button(editor, text="💾 Salva", command=lambda: [salva(), on_close()]).pack(pady=10)
-
-# Funzione per aprire una scheda per la modifica
-# (deve essere visibile prima di avvia_gui_principale)
-def apri_scheda_per_modifica(lingua=None):
-    selezione = elenco.curselection()
-    if not selezione:
-        return
-    idx = selezione[0]
-    filename = file_labels[idx]
-    filepath = os.path.join(US_DIR, filename)
-    with open(filepath, encoding="utf-8") as f:
-        dati = json.load(f)
-    apri_editor_scheda(dati, lingua=lingua)
-
-# Funzione per avviare la GUI principale
-def avvia_gui_principale():
-    global elenco
-    # Carica dati progetto
-    if os.path.exists(PROG_MANAGER_PATH):
-        with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-            prog_data = json.load(f)
-    else:
-        prog_data = {}
-    lingua = prog_data.get("lingua", "it")
-    root.deiconify()  # Mostra la finestra principale
-    root.title(prog_data.get("nome_progetto", T("main_title", lingua)))
-    # Pulisci la finestra se già usata
-    for widget in root.winfo_children():
-        widget.destroy()
-    # Imposta la finestra a schermo intero
-    root.state('zoomed')
-    # Titolo grande e bold
-    titolo = prog_data.get("nome_progetto", T("main_title", lingua))
-    label_titolo = tk.Label(root, text=titolo, font=("TkDefaultFont", 14, "bold"))
-    label_titolo.pack(pady=(10, 2))
-
-    # --- MENU VERTICALE A SINISTRA ---
-    left_menu = tk.Frame(root)
-    left_menu.pack(side="left", padx=(10,0), pady=10, fill="y")
-    btn_plus = tk.Button(left_menu, text=T("new_card", lingua), width=18, height=2, command=lambda: apri_editor_scheda(lingua=lingua))
-    btn_plus.pack(pady=(0, 10))
-    btn_edit = tk.Button(left_menu, text=T("edit_card", lingua), width=18, height=2, command=lambda: apri_scheda_per_modifica(lingua=lingua))
-    btn_edit.pack(pady=(0, 10))
-    # Pulsante Cancella scheda
-    def elimina_scheda():
-        selezione = elenco.curselection()
-        if not selezione:
-            messagebox.showinfo(T("delete_card", lingua), T("select_card_to_delete", lingua) if "select_card_to_delete" in TRANSLATIONS[lingua] else "Seleziona una scheda da eliminare.")
-            return
-        idx = selezione[0]
-        filename = file_labels[idx]
-        risposta = messagebox.askyesno(T("confirm_delete", lingua) if "confirm_delete" in TRANSLATIONS[lingua] else "Conferma eliminazione", f"{T('delete_card', lingua)} {filename}?")
-        if risposta:
-            try:
-                os.remove(os.path.join(US_DIR, filename))
-                aggiorna_elenco()
-                messagebox.showinfo(T("deleted", lingua) if "deleted" in TRANSLATIONS[lingua] else "Eliminata", f"{T('delete_card', lingua)} {filename} {T('deleted', lingua) if 'deleted' in TRANSLATIONS[lingua] else 'eliminata'}.")
-            except Exception as e:
-                messagebox.showerror(
-                    T("error", lingua) if "error" in TRANSLATIONS[lingua] else "Errore",
-                    f"{T('error_deleting', lingua) if 'error_deleting' in TRANSLATIONS[lingua] else 'Errore durante l\'eliminazione'}: {e}"
-                )
-    btn_delete = tk.Button(left_menu, text=T("delete_card", lingua), width=18, height=2, command=elimina_scheda)
-    btn_delete.pack(pady=(0, 10))
-    btn_editor_matrix = tk.Button(left_menu, text=T("editor_matrix", lingua), width=18, height=2, command=visualizza_harris_matrix)
-    btn_editor_matrix.pack(pady=(0, 10))
-    btn_export_csv2 = tk.Button(left_menu, text=T("export_csv", lingua), width=18, height=2, command=esporta_us_csv)
-    btn_export_csv2.pack(pady=(0, 10))
-    btn_export_matrix = tk.Button(left_menu, text=T("export_matrix", lingua), width=18, height=2, command=esporta_matrix_svg)
-    btn_export_matrix.pack(pady=(0, 10))
-
-    # --- DATI DI PROGETTO (frame verticale sotto i pulsanti) ---
-    project_frame = tk.Frame(left_menu)
-    project_frame.pack(pady=(30, 0), anchor="nw", fill="x")
-    project_labels = [
-        (T("project_code", lingua)+":", prog_data.get('codice_progetto', '')),
-        (T("street", lingua)+":", prog_data.get('via', '')),
-        (T("city", lingua)+":", prog_data.get('comune', '')),
-        (T("province", lingua)+":", prog_data.get('provincia', '')),
-        (T("year", lingua)+":", prog_data.get('anno', '')),
-        (T("ente", lingua)+":", prog_data.get('ente_responsabile', '')),
-        (T("ufficio", lingua)+":", prog_data.get('ufficio_mic', ''))
-    ]
-    for i, (label, value) in enumerate(project_labels):
-        tk.Label(project_frame, text=label, anchor="w", font=("TkDefaultFont", 9, "bold"), width=20, justify="left").grid(row=i, column=0, sticky="w")
-        tk.Label(project_frame, text=value, anchor="w", font=("TkDefaultFont", 9), width=22, justify="left", wraplength=180).grid(row=i, column=1, sticky="w")
-
-    # --- FRAME CENTRALE: Matrix di Harris ---
-    center_frame = tk.Frame(root)
-    center_frame.pack(side="left", fill="both", expand=True, padx=(30, 0), pady=10)
-    matrix_canvas = tk.Canvas(center_frame, bg="white")
-    matrix_canvas.pack(fill="both", expand=True)
-
-    # Pulsante refresh matrix sopra il canvas
-    refresh_btn = tk.Button(center_frame, text="\u21bb", width=2, height=1, command=lambda: draw_matrix_on_canvas(matrix_canvas))
-    refresh_btn.pack(anchor="ne", padx=2, pady=(0,2))
-
-    # --- LISTA DELLE SCHEDE US ---
-    elenco_frame = tk.Frame(root)
-    elenco_frame.pack(pady=10, side="left", fill="y", padx=(30,0))
-    elenco_scroll = tk.Scrollbar(elenco_frame, orient="vertical")
-    elenco_scroll.pack(side="right", fill="y")
-    elenco = tk.Listbox(elenco_frame, width=60, height=30, yscrollcommand=elenco_scroll.set)
-    elenco.pack(side="left", fill="y")
-    elenco_scroll.config(command=elenco.yview)
-
-    aggiorna_elenco(lingua=lingua)
-
-    # --- Disegna Matrix di Harris nella home ---
-    def draw_matrix_on_canvas(canvas):
-        # Carica tutte le schede dalla directory
-        schede = []
-        for filename in sorted(os.listdir(US_DIR)):
-            if filename.endswith(".json") and filename != "prog_manager.json":
-                filepath = os.path.join(US_DIR, filename)
+        os.makedirs("su_report", exist_ok=True)
+        if self.existing_data and self.original_filename:
+            old_filepath = os.path.join("su_report", self.original_filename)
+            if old_filepath != new_filepath:
+                if os.path.exists(new_filepath):
+                    messagebox.showerror("Errore", f"Un file con il nuovo nome '{new_filename}' esiste già. Scegli un numero SU o un tipo diverso, o elimina il file esistente.")
+                    return
                 try:
-                    with open(filepath, encoding="utf-8") as f:
-                        data = json.load(f)
-                        if "nr_us" in data:
-                            schede.append(data)
+                    os.remove(old_filepath)
                 except Exception as e:
-                    pass
-        if not schede:
-            return
-        nodes = {s['nr_us']: s for s in schede}
-        edges_set = set()
-        # Relazioni madre-figlia (madre -> figlia)
-        madre_figlia = [
-            ("copre", False), ("riempie", False), ("taglia", False), ("si_appoggia_a", False), ("si_lega_a", False)
-        ]
-        # Relazioni figlia-madre (invertite: madre <- figlia)
-        figlia_madre = [
-            ("coperto_da", True), ("riempito_da", True), ("tagliato_da", True), ("gli_si_appoggia", True)
-        ]
-        for s in schede:
-            u = s['nr_us']
-            for rel, inverti in madre_figlia:
-                for v in s.get(rel, []):
-                    if v in nodes:
-                        edges_set.add((u, v))
-            for rel, inverti in figlia_madre:
-                for v in s.get(rel, []):
-                    if v in nodes:
-                        edges_set.add((v, u))
-        edges = list(edges_set)
-        uguale_edges = set()
-        for s in schede:
-            u = s['nr_us']
-            for v in s.get("uguale_a", []):
-                if v in nodes:
-                    pair = tuple(sorted([u, v]))
-                    uguale_edges.add(pair)
-        levels = {n: 0 for n in nodes}
-        changed = True
-        while changed:
-            changed = False
-            for (u, v) in edges:
-                if levels[v] < levels[u] + 1:
-                    levels[v] = levels[u] + 1
-                    changed = True
-        levels_group = {}
-        for n, lvl in levels.items():
-            levels_group.setdefault(lvl, []).append(n)
-        # RIMOSSO OGNI ORDINAMENTO NUMERICO: non ordinare i livelli numericamente
-        # for lvl in levels_group:
-        #     levels_group[lvl].sort()
-        max_level = max(levels_group.keys())
-        box_width = 80
-        box_height = 40
-        h_spacing = 40
-        v_spacing = 80
-        max_nodes_in_row = max(len(group) for group in levels_group.values())
-        canvas_width = max_nodes_in_row * (box_width + h_spacing) + h_spacing
-        canvas_height = (max_level + 1) * (box_height + v_spacing) + v_spacing
-        # Aggiorna dimensione canvas
-        canvas.config(scrollregion=(0,0,canvas_width,canvas_height))
-        positions = {}
-        # Carica posizioni personalizzate se esistono
-        pos_path = os.path.join(US_DIR, "positions.json")
-        custom_positions = {}
-        if os.path.exists(pos_path):
-            try:
-                with open(pos_path, "r", encoding="utf-8") as f:
-                    custom_positions = json.load(f)
-            except Exception:
-                custom_positions = {}
-        for lvl in range(max_level + 1):
-            if lvl in levels_group:
-                nodes_in_level = levels_group[lvl]
-                count = len(nodes_in_level)
-                total_width = count * box_width + (count - 1) * h_spacing
-                start_x = (canvas_width - total_width) / 2
-                y = v_spacing + lvl * (box_height + v_spacing)
-                for index, n in enumerate(nodes_in_level):
-                    if str(n) in custom_positions:
-                        x, y = custom_positions[str(n)]
-                        positions[n] = (x, y, x + box_width, y + box_height)
-                    else:
-                        x = start_x + index * (box_width + h_spacing)
-                        positions[n] = (x, y, x + box_width, y + box_height)
-        # --- Disegno ---
-        canvas.delete("all")
-        # 1. Calcola i livelli dei nodi (gerarchia):
-        #    - Ogni relazione (copre, riempie, taglia, ecc.) fa salire di livello il target
-        #    - Il livello più basso (0) sono le US senza relazioni entranti
-        # 2. Per ogni relazione, disegna una linea 1 a 1 tra le US, senza merge point
-        # 3. Se una US ha più relazioni entranti, disegna le linee separatamente (no merge)
-        # 4. Se una US ha più relazioni uscenti, disegna le linee separatamente
-        # --- Calcolo merge point per relazioni convergenti ---
-        # 1. Calcola per ogni US quante relazioni entranti ha
-        incoming = {}
-        for (u, v) in edges:
-            incoming.setdefault(v, []).append(u)
-        # 2. Disegna le relazioni con merge point solo dove necessario
-        canvas.delete("all")
-        handled = set()
-        for target, sources in incoming.items():
-            if len(sources) > 1 and target in positions:
-                # Merge point: convergenza delle linee
-                x3, y3, x4, y4 = positions[target]
-                end_x = (x3 + x4) / 2
-                end_y = y3
-                merge_y = end_y - 30
-                merge_x = end_x
-                # Da ogni sorgente, linea verticale fino a merge_y, poi orizzontale fino al merge point
-                for src in sources:
-                    if src not in positions:
-                        continue
-                    x1, y1, x2, y2 = positions[src]
-                    start_x = (x1 + x2) / 2
-                    start_y = y2
-                    canvas.create_line(start_x, start_y, start_x, merge_y, fill="black")
-                    if abs(start_x - merge_x) > 2:
-                        canvas.create_line(start_x, merge_y, merge_x, merge_y, fill="black")
-                # Dal merge point, una sola linea verticale verso la US target
-                canvas.create_line(merge_x, merge_y, end_x, end_y, fill="black")
-                for src in sources:
-                    handled.add((src, target))
-        # 3. Tutte le altre relazioni (no merge point)
-        for (u, v) in edges:
-            if (u, v) in handled:
-                continue
-            if u in positions and v in positions:
-                x1, y1, x2, y2 = positions[u]
-                x3, y3, x4, y4 = positions[v]
-                start_x = (x1 + x2) / 2
-                start_y = y2
-                end_x = (x3 + x4) / 2
-                end_y = y3
-                if abs(start_x - end_x) < 2:
-                    canvas.create_line(start_x, start_y, end_x, end_y, fill="black")
-                else:
-                    mid_y = (start_y + end_y) / 2
-                    canvas.create_line(start_x, start_y, start_x, mid_y, fill="black")
-                    canvas.create_line(start_x, mid_y, end_x, mid_y, fill="black")
-                    canvas.create_line(end_x, mid_y, end_x, end_y, fill="black")
-        # Relazioni uguale_a (rosse tratteggiate)
-        for (u, v) in uguale_edges:
-            if u in positions and v in positions:
-                cx_u = (positions[u][0] + positions[u][2]) / 2
-                cy_u = (positions[u][1] + positions[u][3]) / 2
-                cx_v = (positions[v][0] + positions[v][2]) / 2
-                cy_v = (positions[v][1] + positions[v][3]) / 2
-                canvas.create_line(cx_u, cy_u, cx_v, cy_v, dash=(4, 2), fill="red")
-        for n, coords in positions.items():
-            x1, y1, x2, y2 = coords
-            canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black")
-            canvas.create_text((x1 + x2) / 2, (y1 + y2) / 2, text=f"US {n}")
-
-    # Navigazione e zoom
-    matrix_canvas.bind('<Configure>', lambda e: draw_matrix_on_canvas(matrix_canvas))
-    matrix_canvas.bind('<ButtonPress-1>', lambda e: setattr(matrix_canvas, '_drag_data', (e.x, e.y, matrix_canvas.xview()[0], matrix_canvas.yview()[0])))
-    def on_drag(event):
-        if hasattr(matrix_canvas, '_drag_data'):
-            x, y, x0, y0 = matrix_canvas._drag_data
-            dx = (x - event.x) / matrix_canvas.winfo_width()
-            dy = (y - event.y) / matrix_canvas.winfo_height()
-            matrix_canvas.xview_moveto(x0 + dx)
-            matrix_canvas.yview_moveto(y0 + dy)
-    matrix_canvas.bind('<B1-Motion>', on_drag)
-    def on_mousewheel(event, canvas=matrix_canvas):
-        # Zoom centrato sul mouse
-        factor = 1.1 if event.delta > 0 else 0.9
-        # Semplice zoom su tutto il canvas
-        canvas.scale('all', event.x, event.y, factor, factor)
-
-    def on_arrow(event):
-        # Funzione placeholder: nessun offset gestito
-        pass
-    # Bind mouse wheel (Windows/Mac/Linux)
-    matrix_canvas.bind("<MouseWheel>", lambda e: on_mousewheel(e, matrix_canvas))
-    matrix_canvas.bind("<Button-4>", lambda e: on_mousewheel(type('event', (), {'delta': 120, 'x': e.x, 'y': e.y}), matrix_canvas))  # Linux scroll up
-    matrix_canvas.bind("<Button-5>", lambda e: on_mousewheel(type('event', (), {'delta': -120, 'x': e.x, 'y': e.y}), matrix_canvas)) # Linux scroll down
-    matrix_canvas.bind('<MouseWheel>', on_mousewheel)
-    matrix_canvas.bind('<Button-4>', lambda e: on_mousewheel(type('event', (), {'delta': 120, 'x': e.x, 'y': e.y})))
-    matrix_canvas.bind('<Button-5>', lambda e: on_mousewheel(type('event', (), {'delta': -120, 'x': e.x, 'y': e.y})))
-
-    # Scrollbar per canvas
-    x_scroll = tk.Scrollbar(center_frame, orient='horizontal', command=matrix_canvas.xview)
-    y_scroll = tk.Scrollbar(center_frame, orient='vertical', command=matrix_canvas.yview)
-    matrix_canvas.configure(xscrollcommand=x_scroll.set, yscrollcommand=y_scroll.set)
-    x_scroll.pack(side='bottom', fill='x')
-    y_scroll.pack(side='right', fill='y')
-
-    # Aumenta la dimensione della finestra principale (ora a schermo intero)
-    root.update()
-
-    # Label "Made by Mattia Curto" in basso a sinistra
-    label_credito = tk.Label(root, text=T("credit", lingua) if "credit" in TRANSLATIONS[lingua] else "Made by Mattia Curto", font=("TkDefaultFont", 9, "italic"), anchor="sw")
-    label_credito.place(relx=0.0, rely=1.0, anchor="sw", x=10, y=-5)
-
-def salva_scheda(scheda):
-    # Carica parametri progetto e aggiungili alla scheda
-    if os.path.exists(PROG_MANAGER_PATH):
-        with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-            prog_data = json.load(f)
-        scheda.update(prog_data)
-    filename = f"US{scheda['nr_us']}.json"
-    filepath = os.path.join(US_DIR, filename)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(scheda, f, indent=4, ensure_ascii=False)
-
-# Funzione per aggiornare l'elenco delle schede
-file_labels = []  # lista globale per mappare le righe della listbox ai file reali
-
-def aggiorna_elenco(lingua=None):
-    global file_labels, elenco
-    if lingua is None:
-        if os.path.exists(PROG_MANAGER_PATH):
-            with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-                prog_data = json.load(f)
-            lingua = prog_data.get("lingua", "it")
+                    messagebox.showerror("Errore", f"Impossibile eliminare il vecchio file {self.original_filename}: {e}")
+                    return
+            save_json_file(new_filepath, data)
+            messagebox.showinfo("Salvato", f"Scheda US aggiornata come {new_filename}")
         else:
-            lingua = "it"
-    elenco.delete(0, tk.END)
-    file_labels = []
-    for filename in sorted(os.listdir(US_DIR)):
-        if filename.endswith(".json") and filename not in ("prog_manager.json", "positions.json"):
-            filepath = os.path.join(US_DIR, filename)
-            try:
-                with open(filepath, encoding="utf-8") as f:
-                    dati = json.load(f)
-                responsabile = dati.get("responsabile_compilazione", "-")
-                data_ril = dati.get("data_rilevamento", "-")
-                required_fields = [
-                    "nr_us", "area_struttura", "saggio", "settore", "quadrato",
-                    "criteri_distinzione", "componenti_organici", "componenti_inorganici",
-                    "consistenza", "colore", "misure", "stato_conservazione",
-                    "descrizione", "osservazioni", "interpretazioni", "datazione",
-                    "elementi_datanti", "data_rilevamento", "responsabile_compilazione"
-                ]
-                complete = all(str(dati.get(f, "")).strip() for f in required_fields)
-                stato = T("complete", lingua) if complete and "complete" in TRANSLATIONS[lingua] else ("COMPLETA" if complete else (T("partial", lingua) if "partial" in TRANSLATIONS[lingua] else "PARZIALE"))
-                label = f"{filename} | {responsabile} | {data_ril} | {stato}"
-                elenco.insert(tk.END, label)
-                file_labels.append(filename)
-                # Colorazione
-                if not complete:
-                    elenco.itemconfig(tk.END, {'fg': 'orange'})
-                else:
-                    elenco.itemconfig(tk.END, {'fg': 'green'})
-            except Exception as e:
-                elenco.insert(tk.END, filename)
-                file_labels.append(filename)
+            if os.path.exists(new_filepath):
+                messagebox.showerror("Errore", f"Un file con il nome '{new_filename}' esiste già. Scegli un numero SU o un tipo diverso.")
+                return
+            save_json_file(new_filepath, data)
+            messagebox.showinfo("Salvato", f"Scheda US salvata come {new_filename}")
+        self.destroy()
 
-# Funzione per aprire l'editor (creazione o modifica)
-def apri_editor_scheda(dati=None, lingua=None):
-    if lingua is None:
-        if os.path.exists(PROG_MANAGER_PATH):
-            with open(PROG_MANAGER_PATH, encoding="utf-8") as f:
-                prog_data = json.load(f)
-            lingua = prog_data.get("lingua", "it")
-        else:
-            lingua = "it"
-    us_id = None
-    if dati and "id" in dati:
-        us_id = str(dati["id"])
-    if us_id and us_id in open_us_windows:
-        try:
-            open_us_windows[us_id].lift()
-            open_us_windows[us_id].focus_force()
-        except:
-            pass
-        return
-    editor = tk.Toplevel(root)
-    if us_id:
-        open_us_windows[us_id] = editor
-    def on_close():
-        if us_id and us_id in open_us_windows:
-            del open_us_windows[us_id]
-        editor.destroy()
-    editor.protocol("WM_DELETE_WINDOW", on_close)
-    editor.title(T("edit_title", lingua) if dati else T("new_title", lingua))
+    def populate_fields(self):
+        data = self.existing_data
+        self.us_number_var.set(data.get("SU number", ""))
+        self.type_var.set(data.get("Type", ""))
+        self.negative_var.set(data.get("Negative", False))
+        self.area_var.set(data.get("Area", ""))
+        self.prelim_var.set(data.get("Preliminary archaeological investigations", ""))
+        self.sector_var.set(data.get("Sector", ""))
+        self.square_var.set(data.get("Square", ""))
+        self.distinction_var.set(data.get("Distinction criteria", ""))
+        self.organic_var.set(data.get("Organic components", ""))
+        self.inorganic_var.set(data.get("Inorganic components", ""))
+        self.consistency_var.set(data.get("Consistency", ""))
+        self.color_var.set(data.get("Color", ""))
+        self.measures_var.set(data.get("Measures", ""))
+        for k, var in self.full_relations_vars.items():
+            var.set(data.get("Full Relations", {}).get(k, ""))
+        for k, var in self.simplified_relations_vars.items():
+            var.set(data.get("Simplified Relations", {}).get(k, ""))
+        self.description_text.delete("1.0", tk.END)
+        self.description_text.insert("1.0", data.get("Description", "").strip())
+        self.observations_text.delete("1.0", tk.END)
+        self.observations_text.insert("1.0", data.get("Observations", "").strip())
+        self.interpretations_text.delete("1.0", tk.END)
+        self.interpretations_text.insert("1.0", data.get("Interpretations", "").strip())
+        self.cronological_context_var.set(data.get("Cronological context", ""))
+        self.dating_var.set(data.get("Dating", ""))
+        self.dating_elements_text.delete("1.0", tk.END)
+        self.dating_elements_text.insert("1.0", data.get("Dating elements", "").strip())
+        self.report_author_var.set(data.get("Report author", ""))
+        self.date_var.set(data.get("Date", ""))
+        custom_data_saved = data.get("Custom Fields", {})
+        for field_name, var in self.custom_field_vars.items():
+            if field_name in custom_data_saved:
+                var.set(custom_data_saved[field_name])
 
-    from tkinter import ttk
-    notebook = ttk.Notebook(editor)
-    notebook.pack(fill="both", expand=True, padx=10, pady=10)
+SU_LAYOUT_PATH = os.path.join("manager", "su_layout.json")
 
-    # --- TAB 1: Anagrafica ---
-    tab1 = tk.Frame(notebook)
-    notebook.add(tab1, text=T("tab1", lingua))
-    row = 0
-    tk.Label(tab1, text=T("id", lingua)).grid(row=row, column=0, sticky="e");
-    label_id = tk.Label(tab1, text="")
-    label_id.grid(row=row, column=1, sticky="w"); row+=1
-    tk.Label(tab1, text=T("nr_us", lingua)).grid(row=row, column=0, sticky="e"); entry_nr_us = tk.Entry(tab1); entry_nr_us.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("area_struttura", lingua)).grid(row=row, column=0, sticky="e"); entry_area = tk.Entry(tab1); entry_area.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("saggio", lingua)).grid(row=row, column=0, sticky="e"); entry_saggio = tk.Entry(tab1); entry_saggio.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("settore", lingua)).grid(row=row, column=0, sticky="e"); entry_settore = tk.Entry(tab1); entry_settore.grid(row=row, column=1); row+=1
-    tk.Label(tab1, text=T("quadrato", lingua)).grid(row=row, column=0, sticky="e"); entry_quadrato = tk.Entry(tab1); entry_quadrato.grid(row=row, column=1); row+=1
+def load_su_layout():
+    return load_json_file(SU_LAYOUT_PATH)
 
-    # --- TAB 2: Cosa contiene ---
-    tab2 = tk.Frame(notebook)
-    notebook.add(tab2, text=T("tab2", lingua))
-    row = 0
-    tk.Label(tab2, text=T("criteri_distinzione", lingua)).grid(row=row, column=0, sticky="e"); entry_criteri = tk.Entry(tab2); entry_criteri.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("componenti_organici", lingua)).grid(row=row, column=0, sticky="e"); entry_org = tk.Entry(tab2); entry_org.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("componenti_inorganici", lingua)).grid(row=row, column=0, sticky="e"); entry_inorg = tk.Entry(tab2); entry_inorg.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("consistenza", lingua)).grid(row=row, column=0, sticky="e"); entry_consistenza = ttk.Combobox(tab2, values=[1,2,3,4,5], width=3); entry_consistenza.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("colore", lingua)).grid(row=row, column=0, sticky="e"); entry_colore = tk.Entry(tab2); entry_colore.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("misure", lingua)).grid(row=row, column=0, sticky="e"); entry_misure = tk.Entry(tab2); entry_misure.grid(row=row, column=1); row+=1
-    tk.Label(tab2, text=T("stato_conservazione", lingua)).grid(row=row, column=0, sticky="e"); entry_stato = tk.Entry(tab2); entry_stato.grid(row=row, column=1); row+=1
+def save_su_layout(layout_data):
+    os.makedirs("manager", exist_ok=True)
+    save_json_file(SU_LAYOUT_PATH, layout_data)
 
-    # --- TAB 3: Relazioni US ---
-    tab3 = tk.Frame(notebook)
-    notebook.add(tab3, text=T("tab3", lingua))
-    row = 0
-    tk.Label(tab3, text=T("copre", lingua)).grid(row=row, column=0, sticky="e"); entry_copre = tk.Entry(tab3); entry_copre.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("uguale_a", lingua)).grid(row=row, column=0, sticky="e"); entry_uguale_a = tk.Entry(tab3); entry_uguale_a.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("coperto_da", lingua)).grid(row=row, column=0, sticky="e"); entry_coperto_da = tk.Entry(tab3); entry_coperto_da.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("si_lega_a", lingua)).grid(row=row, column=0, sticky="e"); entry_si_lega_a = tk.Entry(tab3); entry_si_lega_a.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("gli_si_appoggia", lingua)).grid(row=row, column=0, sticky="e"); entry_gli_si_appoggia = tk.Entry(tab3); entry_gli_si_appoggia.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("si_appoggia_a", lingua)).grid(row=row, column=0, sticky="e"); entry_si_appoggia_a = tk.Entry(tab3); entry_si_appoggia_a.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("taglia", lingua)).grid(row=row, column=0, sticky="e"); entry_taglia = tk.Entry(tab3); entry_taglia.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("tagliato_da", lingua)).grid(row=row, column=0, sticky="e"); entry_tagliato_da = tk.Entry(tab3); entry_tagliato_da.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("riempie", lingua)).grid(row=row, column=0, sticky="e"); entry_riempie = tk.Entry(tab3); entry_riempie.grid(row=row, column=1); row+=1
-    tk.Label(tab3, text=T("riempito_da", lingua)).grid(row=row, column=0, sticky="e"); entry_riempito_da = tk.Entry(tab3); entry_riempito_da.grid(row=row, column=1); row+=1
+class RelationViewerDialog(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title("Matrix di Harris (Visualizzatore)")
+        self.geometry("800x600")
+        self.resizable(True, True)
+        self.all_su_data = self._load_all_su_data()
+        self.su_layout_data = load_su_layout()
+        main_frame = ttk.Frame(self)
+        main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+        self.canvas = tk.Canvas(main_frame, bg="white")
+        self.h_scrollbar = ttk.Scrollbar(main_frame, orient="horizontal", command=self.canvas.xview)
+        self.v_scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=self.canvas.yview)
+        self.canvas.config(xscrollcommand=self.h_scrollbar.set, yscrollcommand=self.v_scrollbar.set)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.v_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.h_scrollbar.grid(row=1, column=0, sticky="ew")
+        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+        self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+        self.canvas.bind("<ButtonPress-2>", self.on_pan_start)
+        self.canvas.bind("<B2-Motion>", self.on_pan_drag)
+        self.canvas.bind("<MouseWheel>", self.on_zoom)
+        self.canvas.bind("<Button-4>", self.on_zoom)
+        self.canvas.bind("<Button-5>", self.on_zoom)
+        self.selected_item = None
+        self.start_x = None
+        self.start_y = None
+        self.current_su_tag = None
+        self._draw_relations()
+        button_frame = ttk.Frame(self)
+        button_frame.pack(pady=5, fill="x", side="bottom")
+        ttk.Button(button_frame, text="Salva Layout", command=self.save_current_layout).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Esporta SVG", command=self.export_svg).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Resetta Vista", command=self._draw_relations).pack(side="left", padx=5)
 
-    # --- TAB 4: Osservazioni ---
-    tab4 = tk.Frame(notebook)
-    notebook.add(tab4, text=T("tab4", lingua))
-    row = 0
-    tk.Label(tab4, text=T("descrizione", lingua)).grid(row=row, column=0, sticky="ne"); text_descrizione = tk.Text(tab4, width=40, height=3); text_descrizione.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("osservazioni", lingua)).grid(row=row, column=0, sticky="ne"); text_osservazioni = tk.Text(tab4, width=40, height=2); text_osservazioni.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("interpretazioni", lingua)).grid(row=row, column=0, sticky="ne"); text_interpretazioni = tk.Text(tab4, width=40, height=2); text_interpretazioni.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("datazione", lingua)).grid(row=row, column=0, sticky="e"); entry_datazione = tk.Entry(tab4); entry_datazione.grid(row=row, column=1); row+=1
-    tk.Label(tab4, text=T("elementi_datanti", lingua)).grid(row=row, column=0, sticky="e"); entry_elementi = tk.Entry(tab4); entry_elementi.grid(row=row, column=1); row+=1
+    def _load_all_su_data(self):
+        folder = "su_report"
+        data = {}
+        if os.path.exists(folder):
+            for filename in os.listdir(folder):
+                if filename.lower().endswith(".json"):
+                    filepath = os.path.join(folder, filename)
+                    su_data = load_json_file(filepath)
+                    if su_data:
+                        data[os.path.splitext(filename)[0]] = su_data
+        return data
+    
+    def _get_su_display_name(self, su_name):
+        return su_name
 
-    # --- TAB 5: Autore ---
-    tab5 = tk.Frame(notebook)
-    notebook.add(tab5, text=T("tab5", lingua))
-    row = 0
-    tk.Label(tab5, text=T("data_rilevamento", lingua)).grid(row=row, column=0, sticky="e"); entry_data_ril = tk.Entry(tab5); entry_data_ril.grid(row=row, column=1); row+=1
-    tk.Label(tab5, text=T("responsabile_compilazione", lingua)).grid(row=row, column=0, sticky="e"); entry_responsabile = tk.Entry(tab5); entry_responsabile.grid(row=row, column=1); row+=1
-
-    # Precompila i campi se modifica
-    if dati:
-        label_id.config(text=str(dati.get("id", "")))
-        entry_nr_us.insert(0, str(dati.get("nr_us", "")))
-        entry_area.insert(0, dati.get("area_struttura", ""))
-        entry_saggio.insert(0, dati.get("saggio", ""))
-        entry_settore.insert(0, dati.get("settore", ""))
-        entry_quadrato.insert(0, dati.get("quadrato", ""))
-        entry_criteri.insert(0, dati.get("criteri_distinzione", ""))
-        entry_org.insert(0, dati.get("componenti_organici", ""))
-        entry_inorg.insert(0, dati.get("componenti_inorganici", ""))
-        entry_consistenza.set(dati.get("consistenza", ""))
-        entry_colore.insert(0, dati.get("colore", ""))
-        entry_misure.insert(0, dati.get("misure", ""))
-        entry_stato.insert(0, dati.get("stato_conservazione", ""))
-        entry_copre.insert(0, ",".join(str(n) for n in dati.get("copre", [])))
-        entry_uguale_a.insert(0, ",".join(str(n) for n in dati.get("uguale_a", [])))
-        entry_coperto_da.insert(0, ",".join(str(n) for n in dati.get("coperto_da", [])))
-        entry_si_lega_a.insert(0, ",".join(str(n) for n in dati.get("si_lega_a", [])))
-        entry_gli_si_appoggia.insert(0, ",".join(str(n) for n in dati.get("gli_si_appoggia", [])))
-        entry_si_appoggia_a.insert(0, ",".join(str(n) for n in dati.get("si_appoggia_a", [])))
-        entry_taglia.insert(0, ",".join(str(n) for n in dati.get("taglia", [])))
-        entry_tagliato_da.insert(0, ",".join(str(n) for n in dati.get("tagliato_da", [])))
-        entry_riempie.insert(0, ",".join(str(n) for n in dati.get("riempie", [])))
-        entry_riempito_da.insert(0, ",".join(str(n) for n in dati.get("riempito_da", [])))
-        text_descrizione.insert("1.0", dati.get("descrizione", ""))
-        text_osservazioni.insert("1.0", dati.get("osservazioni", ""))
-        text_interpretazioni.insert("1.0", dati.get("interpretazioni", ""))
-        entry_datazione.insert(0, dati.get("datazione", ""))
-        entry_elementi.insert(0, dati.get("elementi_datanti", ""))
-        entry_data_ril.insert(0, dati.get("data_rilevamento", ""))
-        entry_responsabile.insert(0, dati.get("responsabile_compilazione", ""))
-    else:
-        # Calcola nuovo ID automatico
-        try:
-            us_files = [f for f in os.listdir(US_DIR) if f.endswith('.json') and f != 'prog_manager.json']
-            max_id = 0
-            for f in us_files:
-                with open(os.path.join(US_DIR, f), encoding="utf-8") as ff:
-                    d = json.load(ff)
-                    if "id" in d:
-                        try:
-                            max_id = max(max_id, int(d["id"]))
-                        except:
-                            pass
-            nuovo_id = max_id + 1
-        except:
-            nuovo_id = 1
-        label_id.config(text=str(nuovo_id))
-
-    def salva():
-        try:
-            nr_us = int(entry_nr_us.get())
-        except:
-            messagebox.showerror(T("error", lingua) if "error" in TRANSLATIONS[lingua] else "Errore", T("invalid_us_number", lingua) if "invalid_us_number" in TRANSLATIONS[lingua] else "Numero US non valido.")
+    def _draw_relations(self):
+        self.canvas.delete("all")
+        if not self.all_su_data:
+            self.canvas.create_text(50, 50, anchor="nw", text="Nessuna scheda US trovata.")
             return
-        if dati:
-            id_val = dati.get("id", label_id.cget("text"))
-        else:
-            id_val = label_id.cget("text")
+        adj_list = {su: [] for su in self.all_su_data.keys()}
+        reverse_adj_list = {su: [] for su in self.all_su_data.keys()}
+        for su_name, su_data in self.all_su_data.items():
+            simplified_relations = su_data.get("Simplified Relations", {})
+            covers_str = simplified_relations.get("Covers", "").strip()
+            if covers_str:
+                for covered_su in [s.strip() for s in covers_str.split(',') if s.strip()]:
+                    if covered_su in self.all_su_data:
+                        adj_list[su_name].append(covered_su)
+                        reverse_adj_list[covered_su].append(su_name)
+            covered_by_str = simplified_relations.get("Covered by", "").strip()
+            if covered_by_str:
+                for covering_su in [s.strip() for s in covered_by_str.split(',') if s.strip()]:
+                    if covering_su in self.all_su_data:
+                        adj_list[covering_su].append(su_name)
+                        reverse_adj_list[su_name].append(covering_su)
+        root_sus = [su for su in self.all_su_data.keys() if not reverse_adj_list[su]]
+        if not root_sus and self.all_su_data:
+            root_sus = list(self.all_su_data.keys())
+            messagebox.showwarning("Attenzione", "Nessuna US radice trovata. Visualizzazione di tutte le unità. La matrice potrebbe essere incompleta o contenere cicli.")
+        root_sus.sort(key=lambda x: self.all_su_data[x].get("SU number", 0))
+        levels = {}
+        queue = []
+        for root_su in root_sus:
+            if root_su not in levels:
+                levels[root_su] = 0
+                queue.append(root_su)
+        max_level = 0
+        head = 0
+        while head < len(queue):
+            current_su = queue[head]
+            head += 1
+            max_level = max(max_level, levels.get(current_su, 0))
+            for neighbor_su in adj_list.get(current_su, []):
+                if neighbor_su not in levels or levels[neighbor_su] < levels[current_su] + 1:
+                    levels[neighbor_su] = levels[current_su] + 1
+                    queue.append(neighbor_su)
+        sus_by_level = {i: [] for i in range(max_level + 1)}
+        for su_name, level in levels.items():
+            sus_by_level[level].append(su_name)
+        for level_num in sus_by_level:
+            sus_by_level[level_num].sort(key=lambda x: self.all_su_data[x].get("SU number", 0))
+        node_width, node_height, horizontal_spacing, vertical_spacing, padding = 80, 40, 30, 60, 100
+        for level_num in range(max_level + 1):
+            sus_in_level = sus_by_level.get(level_num, [])
+            level_content_width = len(sus_in_level) * (node_width + horizontal_spacing) - horizontal_spacing
+            start_x = padding - (level_content_width / 2)
+            y_pos = padding + (max_level - level_num) * (node_height + vertical_spacing) + node_height / 2
+            current_x = start_x + node_width / 2
+            for su_name in sus_in_level:
+                if su_name not in self.su_layout_data or len(self.su_layout_data.get(su_name, [])) != 2:
+                    self.su_layout_data[su_name] = [current_x - node_width/2, y_pos - node_height/2]
+                current_x += (node_width + horizontal_spacing)
+        for su_name, pos in self.su_layout_data.items():
+            if su_name not in self.all_su_data: continue
+            x1, y1 = pos
+            x2, y2 = x1 + node_width, y1 + node_height
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill="#C6F4FA", outline="black", width=1, tags=(su_name, "su_rect"))
+            self.canvas.create_text(x1 + node_width / 2, y1 + node_height / 2, text=self._get_su_display_name(su_name), fill="black", font=("Arial", 10, "bold"), tags=(su_name, "su_text"))
+        self._redraw_all_lines()
+        bbox = self.canvas.bbox("all")
+        self.canvas.configure(scrollregion=(bbox[0] - 50, bbox[1] - 50, bbox[2] + 50, bbox[3] + 50) if bbox else (0,0,800,600))
+
+    def on_button_press(self, event):
+        self.selected_item = self.canvas.find_closest(event.x, event.y)[0]
+        item_tags = self.canvas.gettags(self.selected_item)
+        self.current_su_tag = next((tag for tag in item_tags if tag.startswith("US")), None)
+        if self.current_su_tag:
+            self.start_x = self.canvas.canvasx(event.x)
+            self.start_y = self.canvas.canvasy(event.y)
+            self.canvas.itemconfig(self.canvas.find_withtag(self.current_su_tag + "&&su_rect"), outline="red", width=2)
+            self.canvas.tag_raise(self.current_su_tag)
+
+    def on_mouse_drag(self, event):
+        if self.current_su_tag:
+            dx = self.canvas.canvasx(event.x) - self.start_x
+            dy = self.canvas.canvasy(event.y) - self.start_y
+            for item_id in self.canvas.find_withtag(self.current_su_tag):
+                self.canvas.move(item_id, dx, dy)
+            self.start_x = self.canvas.canvasx(event.x)
+            self.start_y = self.canvas.canvasy(event.y)
+            coords = self.canvas.coords(self.canvas.find_withtag(self.current_su_tag + "&&su_rect"))
+            self.su_layout_data[self.current_su_tag] = [coords[0], coords[1]]
+            self._redraw_all_lines()
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def on_button_release(self, event):
+        if self.current_su_tag:
+            self.canvas.itemconfig(self.canvas.find_withtag(self.current_su_tag + "&&su_rect"), outline="black", width=1)
+            self.selected_item = self.start_x = self.start_y = self.current_su_tag = None
+
+    def _redraw_all_lines(self):
+        self.canvas.delete("relation_line")
+        node_width, node_height = 80, 40
+        adj_list = {su: [] for su in self.all_su_data.keys()}
+        for su_name, su_data in self.all_su_data.items():
+            simplified_relations = su_data.get("Simplified Relations", {})
+            if covers_str := simplified_relations.get("Covers", "").strip():
+                for covered_su in [s.strip() for s in covers_str.split(',') if s.strip()]:
+                    if covered_su in self.all_su_data:
+                        adj_list[su_name].append(covered_su)
+            if covered_by_str := simplified_relations.get("Covered by", "").strip():
+                for covering_su in [s.strip() for s in covered_by_str.split(',') if s.strip()]:
+                    if covering_su in self.all_su_data:
+                        adj_list[covering_su].append(su_name)
+        for su_name, children in adj_list.items():
+            if su_name not in self.su_layout_data: continue
+            p_x_tl, p_y_tl = self.su_layout_data[su_name]
+            for child_su_name in children:
+                if child_su_name in self.su_layout_data:
+                    c_x_tl, c_y_tl = self.su_layout_data[child_su_name]
+                    self.canvas.create_line(p_x_tl + node_width / 2, p_y_tl + node_height, c_x_tl + node_width / 2, c_y_tl, arrow=tk.LAST, fill="black", width=1.5, tags=("relation_line", f"line_{su_name}_{child_su_name}"))
+
+    def on_pan_start(self, event): self.canvas.scan_mark(event.x, event.y)
+    def on_pan_drag(self, event): self.canvas.scan_dragto(event.x, event.y, gain=1)
+    def on_zoom(self, event):
+        factor = 1.1 if event.num == 4 or event.delta > 0 else 0.9 if event.num == 5 or event.delta < 0 else 0
+        if factor:
+            self.canvas.scale("all", self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), factor, factor)
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def save_current_layout(self):
+        save_su_layout(self.su_layout_data)
+        messagebox.showinfo("Layout Salvato", "Le posizioni correnti del layout sono state salvate.")
+
+    def export_svg(self):
         try:
-            copre = [int(x.strip()) for x in entry_copre.get().split(",") if x.strip()]
-            uguale_a = [int(x.strip()) for x in entry_uguale_a.get().split(",") if x.strip()]
-            coperto_da = [int(x.strip()) for x in entry_coperto_da.get().split(",") if x.strip()]
-            si_lega_a = [int(x.strip()) for x in entry_si_lega_a.get().split(",") if x.strip()]
-            gli_si_appoggia = [int(x.strip()) for x in entry_gli_si_appoggia.get().split(",") if x.strip()]
-            si_appoggia_a = [int(x.strip()) for x in entry_si_appoggia_a.get().split(",") if x.strip()]
-            taglia = [int(x.strip()) for x in entry_taglia.get().split(",") if x.strip()]
-            tagliato_da = [int(x.strip()) for x in entry_tagliato_da.get().split(",") if x.strip()]
-            riempie = [int(x.strip()) for x in entry_riempie.get().split(",") if x.strip()]
-            riempito_da = [int(x.strip()) for x in entry_riempito_da.get().split(",") if x.strip()]
-        except:
-            messagebox.showerror(T("error", lingua) if "error" in TRANSLATIONS[lingua] else "Errore", T("relations_must_be_numbers", lingua) if "relations_must_be_numbers" in TRANSLATIONS[lingua] else "Le relazioni devono essere numeri separati da virgole.")
+            file_path = simpledialog.askstring("Esporta SVG", "Inserisci nome file (es. matrix.svg):", parent=self)
+            if not file_path: return
+            if not file_path.lower().endswith(".svg"): file_path += ".svg"
+            bbox = self.canvas.bbox("all")
+            if not bbox:
+                messagebox.showwarning("Esporta SVG", "Canvas vuoto, niente da esportare.")
+                return
+            x_min, y_min, x_max, y_max = bbox
+            width, height = x_max - x_min + 20, y_max - y_min + 20
+            svg_content = f'<svg width="{width}" height="{height}" viewBox="{x_min-10} {y_min-10} {width} {height}" xmlns="http://www.w3.org/2000/svg">\n'
+            svg_content += '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="black" /></marker></defs>\n'
+            for item_id in self.canvas.find_all():
+                item_type = self.canvas.type(item_id)
+                coords = self.canvas.coords(item_id)
+                if item_type == "rectangle":
+                    svg_content += f'<rect x="{coords[0]}" y="{coords[1]}" width="{coords[2]-coords[0]}" height="{coords[3]-coords[1]}" fill="{self.canvas.itemcget(item_id, "fill")}" stroke="{self.canvas.itemcget(item_id, "outline")}" stroke-width="{self.canvas.itemcget(item_id, "width")}"/>\n'
+                elif item_type == "text":
+                    font = tkFont.Font(font=self.canvas.itemcget(item_id, "font"))
+                    svg_content += f'<text x="{coords[0]}" y="{coords[1]}" text-anchor="middle" dominant-baseline="central" font-family="{font.actual("family")}" font-size="{font.actual("size")}px" fill="{self.canvas.itemcget(item_id, "fill")}" font-weight="{font.actual("weight")}">{self.canvas.itemcget(item_id, "text")}</text>\n'
+                elif item_type == "line" and "relation_line" in self.canvas.gettags(item_id) and len(coords) == 4:
+                    svg_content += f'<line x1="{coords[0]}" y1="{coords[1]}" x2="{coords[2]}" y2="{coords[3]}" stroke="{self.canvas.itemcget(item_id, "fill")}" stroke-width="{self.canvas.itemcget(item_id, "width")}" marker-end="url(#arrowhead)"/>\n'
+            svg_content += '</svg>'
+            with open(file_path, "w", encoding="utf-8") as f: f.write(svg_content)
+            messagebox.showinfo("Esportazione Riuscita", f"Matrice esportata in {file_path}")
+        except Exception as e:
+            messagebox.showerror("Errore Esportazione", f"Impossibile esportare SVG: {e}")
+
+class DiaryEditDialog(tk.Toplevel):
+    def __init__(self, master, project_data, existing_data=None, original_filename=None):
+        super().__init__(master)
+        self.title("Nuova Scheda Diario" if existing_data is None else "Modifica Scheda Diario")
+        self.resizable(False, False)
+        self.project_data = project_data
+        self.existing_data = existing_data
+        self.original_filename = original_filename
+        self.create_widgets()
+        if self.existing_data: self.populate_fields()
+        else: self.date_var.set(datetime.date.today().strftime('%Y_%m_%d'))
+
+    def create_widgets(self):
+        main_frame = ttk.Frame(self); main_frame.pack(padx=10, pady=10)
+        self.entries = {}
+        row = 0
+        ttk.Label(main_frame, text="Data (YYYY_MM_DD)").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.date_var = tk.StringVar()
+        ttk.Entry(main_frame, textvariable=self.date_var, width=40).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        self.entries["Date"] = self.date_var; row += 1
+        ttk.Label(main_frame, text="Giorno della settimana").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.day_of_week_var = tk.StringVar()
+        ttk.Combobox(main_frame, textvariable=self.day_of_week_var, values=["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"], state="readonly", width=38).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        self.entries["Day of the week"] = self.day_of_week_var; row +=1
+        for key, label_text in {"Operatori": "Operatori", "Indirizzo dei lavori in giornata": "Indirizzo Lavori"}.items():
+            ttk.Label(main_frame, text=label_text).grid(row=row, column=0, sticky="w", padx=5, pady=3)
+            var = tk.StringVar()
+            ttk.Entry(main_frame, textvariable=var, width=40).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+            self.entries[key] = var; row += 1
+        ttk.Label(main_frame, text="US indagate").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        su_frame = ttk.Frame(main_frame); su_frame.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        self.su_indagate_var = tk.StringVar()
+        ttk.Entry(su_frame, textvariable=self.su_indagate_var, width=30).pack(side="left")
+        ttk.Button(su_frame, text="...", width=3, command=self.open_su_selection_for_diary).pack(side="left", padx=(3,0))
+        self.entries["SU indagate"] = self.su_indagate_var; row += 1
+        ttk.Label(main_frame, text="Descrizione").grid(row=row, column=0, sticky="nw", padx=5, pady=3)
+        self.description_text = tk.Text(main_frame, width=40, height=5); self.description_text.grid(row=row, column=1, sticky="w", padx=5, pady=3); row += 1
+        self.rinvenimenti_var = tk.BooleanVar()
+        ttk.Label(main_frame, text="Rinvenimenti archeologici").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        ttk.Checkbutton(main_frame, variable=self.rinvenimenti_var).grid(row=row, column=1, sticky="w", padx=5, pady=3); row += 1
+        ttk.Button(main_frame, text="\U0001F4BE Salva", command=self.save_diary).grid(row=row, column=0, columnspan=2, pady=10)
+
+    def open_su_selection_for_diary(self):
+        dialog = tk.Toplevel(self); dialog.title("Seleziona US Indagate"); dialog.geometry("300x400"); dialog.transient(self); dialog.grab_set()
+        ttk.Label(dialog, text="Seleziona una o più US:").pack(pady=5)
+        listbox = tk.Listbox(dialog, selectmode="multiple", exportselection=False); listbox.pack(fill="both", expand=True, padx=10, pady=5)
+        available_sus = sorted([os.path.splitext(f)[0] for f in list_su_reports()])
+        for su_name in available_sus: listbox.insert(tk.END, su_name)
+        for i, su_name in enumerate(available_sus):
+            if su_name in [s.strip() for s in self.su_indagate_var.get().split(',') if s.strip()]: listbox.selection_set(i)
+        def on_ok():
+            self.su_indagate_var.set(", ".join([listbox.get(i) for i in listbox.curselection()])); dialog.destroy()
+        btn_frame = ttk.Frame(dialog); btn_frame.pack(pady=5)
+        ttk.Button(btn_frame, text="OK", command=on_ok).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Annulla", command=dialog.destroy).pack(side="left", padx=5)
+        self.wait_window(dialog)
+
+    def populate_fields(self):
+        for key, var in self.entries.items(): var.set(self.existing_data.get(key, ""))
+        self.description_text.delete("1.0", tk.END); self.description_text.insert("1.0", self.existing_data.get("Descrizione", ""))
+        self.rinvenimenti_var.set(self.existing_data.get("Rinvenimenti archeologici", False))
+
+    def validate_date(self, date_str):
+        try: datetime.datetime.strptime(date_str, '%Y_%m_%d'); return True
+        except ValueError: return False
+
+    def save_diary(self):
+        date_str = self.date_var.get()
+        if not self.validate_date(date_str):
+            messagebox.showerror("Data non valida", "La data deve essere in formato YYYY_MM_DD (es. 2025_07_08).")
             return
-        scheda = {
-            "id": id_val,
-            "nr_us": nr_us,
-            "area_struttura": entry_area.get(),
-            "saggio": entry_saggio.get(),
-            "settore": entry_settore.get(),
-            "quadrato": entry_quadrato.get(),
-            "criteri_distinzione": entry_criteri.get(),
-            "componenti_organici": entry_org.get(),
-            "componenti_inorganici": entry_inorg.get(),
-            "consistenza": entry_consistenza.get(),
-            "colore": entry_colore.get(),
-            "misure": entry_misure.get(),
-            "stato_conservazione": entry_stato.get(),
-            "copre": copre,
-            "uguale_a": uguale_a,
-            "coperto_da": coperto_da,
-            "si_lega_a": si_lega_a,
-            "gli_si_appoggia": gli_si_appoggia,
-            "si_appoggia_a": si_appoggia_a,
-            "taglia": taglia,
-            "tagliato_da": tagliato_da,
-            "riempie": riempie,
-            "riempito_da": riempito_da,
-            "descrizione": text_descrizione.get("1.0", "end").strip(),
-            "osservazioni": text_osservazioni.get("1.0", "end").strip(),
-            "interpretazioni": text_interpretazioni.get("1.0", "end").strip(),
-            "datazione": entry_datazione.get(),
-            "elementi_datanti": entry_elementi.get(),
-            "data_rilevamento": entry_data_ril.get(),
-            "responsabile_compilazione": entry_responsabile.get()
-        }
-        salva_scheda(scheda)
-        messagebox.showinfo(T("saved", lingua) if "saved" in TRANSLATIONS[lingua] else "Salvato", f"{T('card', lingua) if 'card' in TRANSLATIONS[lingua] else 'Scheda'} US[{nr_us}] {'aggiornata' if dati else 'creata'}.")
-        aggiorna_elenco(lingua=lingua)
-        editor.destroy()
+        new_filename = f"{date_str}.json"
+        diary_folder = "diary_usm"
+        new_filepath = os.path.join(diary_folder, new_filename)
+        if self.original_filename is None and os.path.exists(new_filepath):
+            messagebox.showerror("File Esistente", f"Una scheda diario per questa data ({date_str}) esiste già.")
+            return
+        if self.original_filename and new_filename != self.original_filename and os.path.exists(new_filepath):
+            messagebox.showerror("File Esistente", f"Impossibile rinominare in {new_filename} perché un file con quel nome esiste già.")
+            return
+        data = {"project_name": self.project_data.get("project_name", "N/A"), "project_id": self.project_data.get("project_id", "N/A"), "Descrizione": self.description_text.get("1.0", tk.END).strip(), "Rinvenimenti archeologici": self.rinvenimenti_var.get()}
+        for key, var in self.entries.items(): data[key] = var.get()
+        save_json_file(new_filepath, data)
+        if self.original_filename and new_filename != self.original_filename:
+            os.remove(os.path.join(diary_folder, self.original_filename))
+        messagebox.showinfo("Successo", f"Scheda diario '{new_filename}' salvata.")
+        self.destroy()
 
-    tk.Button(editor, text="💾 Salva", command=lambda: [salva(), on_close()]).pack(pady=10)
+class DiaryViewerDialog(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title("Gestore Diario USM")
+        self.geometry("750x500")
+        self.resizable(True, True)
+        self.master = master
+        self.diary_folder = "diary_usm"
+        os.makedirs(self.diary_folder, exist_ok=True)
+        self.create_widgets()
+        self.load_diary_files()
 
-# Funzione per aprire scheda in modifica
-def apri_scheda_per_modifica(lingua=None):
-    global elenco, file_labels
-    selezione = elenco.curselection()
-    if not selezione:
-        return
-    idx = selezione[0]
-    filename = file_labels[idx]
-    filepath = os.path.join(US_DIR, filename)
-    with open(filepath, encoding="utf-8") as f:
-        dati = json.load(f)
-    apri_editor_scheda(dati, lingua=lingua)
+    def create_widgets(self):
+        main_frame = ttk.Frame(self); main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        main_frame.grid_columnconfigure(1, weight=1); main_frame.grid_rowconfigure(0, weight=1)
+        left_frame = ttk.Frame(main_frame); left_frame.grid(row=0, column=0, sticky="ns", padx=(0, 5)); left_frame.grid_rowconfigure(1, weight=1)
+        tk.Label(left_frame, text="File Diario Disponibili:").grid(row=0, column=0, pady=5)
+        self.file_listbox = tk.Listbox(left_frame, width=30); self.file_listbox.grid(row=1, column=0, sticky="ns")
+        self.file_listbox.bind("<<ListboxSelect>>", self.on_file_select)
+        scrollbar = ttk.Scrollbar(left_frame, orient="vertical", command=self.file_listbox.yview); scrollbar.grid(row=1, column=1, sticky="ns"); self.file_listbox.config(yscrollcommand=scrollbar.set)
+        button_frame = ttk.Frame(left_frame); button_frame.grid(row=2, column=0, columnspan=2, pady=5)
+        self.new_btn = ttk.Button(button_frame, text="Nuovo", command=self.new_diary); self.new_btn.pack(side="left", padx=2)
+        self.edit_btn = ttk.Button(button_frame, text="Modifica", state="disabled", command=self.edit_diary); self.edit_btn.pack(side="left", padx=2)
+        self.delete_btn = ttk.Button(button_frame, text="Elimina", state="disabled", command=self.delete_diary); self.delete_btn.pack(side="left", padx=2)
+        content_frame = ttk.Frame(main_frame); content_frame.grid(row=0, column=1, sticky="nsew"); content_frame.grid_rowconfigure(1, weight=1); content_frame.grid_columnconfigure(0, weight=1)
+        tk.Label(content_frame, text="Contenuto File:").grid(row=0, column=0, pady=5, sticky="w")
+        self.content_text = tk.Text(content_frame, wrap="word", state="disabled"); self.content_text.grid(row=1, column=0, sticky="nsew")
+        content_scrollbar = ttk.Scrollbar(content_frame, orient="vertical", command=self.content_text.yview); content_scrollbar.grid(row=1, column=1, sticky="ns"); self.content_text.config(yscrollcommand=content_scrollbar.set)
 
-# Funzione per visualizzare il matrix di Harris
-def visualizza_harris_matrix():
-    if open_matrix_window[0] is not None and open_matrix_window[0].winfo_exists():
-        open_matrix_window[0].lift()
-        open_matrix_window[0].focus_force()
-        return
-    # Carica tutte le schede dalla directory
-    schede = []
-    for filename in sorted(os.listdir(US_DIR)):
-        if filename.endswith(".json") and filename != "prog_manager.json":
-            filepath = os.path.join(US_DIR, filename)
-            try:
-                with open(filepath, encoding="utf-8") as f:
-                    data = json.load(f)
-                    if "nr_us" in data:
-                        schede.append(data)
-            except Exception as e:
-                print(f"Errore leggendo {filename}: {e}")
-    if not schede:
-        messagebox.showinfo("Matrix di Harris", "Nessuna scheda disponibile per visualizzare la matrix.")
-        return
+    def on_file_select(self, event=None):
+        state = "normal" if self.file_listbox.curselection() else "disabled"
+        self.edit_btn.config(state=state); self.delete_btn.config(state=state)
+        if state == "normal": self.display_selected_file()
+        else: self.content_text.config(state="normal"); self.content_text.delete("1.0", tk.END); self.content_text.config(state="disabled")
 
-    # Crea un dizionario di nodi basato su nr_us
-    nodes = {s['nr_us']: s for s in schede}
-
-    # Costruisce le relazioni SOLO come indicato in "copre" e "coperto_da" (no duplicati, no simmetrie)
-    edges_set = set()
-    for s in schede:
-        u = s['nr_us']
-        # Relazioni dirette: u copre v
-        for v in s.get("copre", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        # Relazioni dirette: u è coperto da v (quindi v -> u)
-        for v in s.get("coperto_da", []):
-            if v in nodes:
-                edges_set.add((v, u))
-        for v in s.get("si_lega_a", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("gli_si_appoggia", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("si_appoggia_a", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("taglia", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("tagliato_da", []):
-            if v in nodes:
-                edges_set.add((v, u))
-        for v in s.get("riempie", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("riempito_da", []):
-            if v in nodes:
-                edges_set.add((v, u))
-    edges = list(edges_set)
-    uguale_edges = set()
-    for s in schede:
-        u = s['nr_us']
-        for v in s.get("uguale_a", []):
-            if v in nodes:
-                pair = tuple(sorted([u, v]))
-                uguale_edges.add(pair)
-    levels = {n: 0 for n in nodes}
-    changed = True
-    while changed:
-        changed = False
-        for (u, v) in edges:
-            if levels[v] < levels[u] + 1:
-                levels[v] = levels[u] + 1
-                changed = True
-    levels_group = {}
-    for n, lvl in levels.items():
-        levels_group.setdefault(lvl, []).append(n)
-    # RIMOSSO OGNI ORDINAMENTO NUMERICO: non ordinare i livelli numericamente
-    # for lvl in levels_group:
-    #     levels_group[lvl].sort()
-    max_level = max(levels_group.keys())
-    box_width = 80
-    box_height = 40
-    h_spacing = 40
-    v_spacing = 80
-    max_nodes_in_row = max(len(group) for group in levels_group.values())
-    canvas_width = int(max_nodes_in_row * (box_width + h_spacing) + h_spacing)
-    canvas_height = int((max_level + 1) * (box_height + v_spacing) + v_spacing)
-    editor_win = tk.Toplevel(root)
-    editor_win.title("Editor Matrix di Harris")
-    editor_win.geometry(f"{canvas_width+40}x{canvas_height+40}")
-    # Sostituisco il canvas con una struttura con barre di scorrimento
-    canvas_frame = tk.Frame(editor_win)
-    canvas_frame.pack(padx=10, pady=10, fill="both", expand=True)
-    x_scroll = tk.Scrollbar(canvas_frame, orient='horizontal')
-    y_scroll = tk.Scrollbar(canvas_frame, orient='vertical')
-    canvas = tk.Canvas(canvas_frame, width=canvas_width, height=canvas_height, bg="white",
-                      xscrollcommand=x_scroll.set, yscrollcommand=y_scroll.set,
-                      scrollregion=(0,0,canvas_width,canvas_height))
-    canvas.grid(row=0, column=0, sticky="nsew")
-    x_scroll.config(command=canvas.xview)
-    y_scroll.config(command=canvas.yview)
-    x_scroll.grid(row=1, column=0, sticky="ew")
-    y_scroll.grid(row=0, column=1, sticky="ns")
-    canvas_frame.grid_rowconfigure(0, weight=1)
-    canvas_frame.grid_columnconfigure(0, weight=1)
-    # --- Calcolo posizioni dei nodi (positions) ---
-    levels_group = {}
-    for n, lvl in levels.items():
-        levels_group.setdefault(lvl, []).append(n)
-    max_level = max(levels_group.keys())
-    box_width = 80
-    box_height = 40
-    h_spacing = 40
-    v_spacing = 80
-    max_nodes_in_row = max(len(group) for group in levels_group.values())
-    canvas_width = int(max_nodes_in_row * (box_width + h_spacing) + h_spacing)
-    canvas_height = int((max_level + 1) * (box_height + v_spacing) + v_spacing)
-    positions = {}
-    # Carica posizioni personalizzate se esistono
-    pos_path = os.path.join(US_DIR, "positions.json")
-    custom_positions = {}
-    if os.path.exists(pos_path):
+    def load_diary_files(self):
+        self.file_listbox.delete(0, tk.END)
         try:
-            with open(pos_path, "r", encoding="utf-8") as f:
-                custom_positions = json.load(f)
-        except Exception:
-            custom_positions = {}
-    for lvl in range(max_level + 1):
-        if lvl in levels_group:
-            nodes_in_level = levels_group[lvl]
-            count = len(nodes_in_level)
-            total_width = count * box_width + (count - 1) * h_spacing
-            start_x = (canvas_width - total_width) / 2
-            y = v_spacing + lvl * (box_height + v_spacing)
-            for index, n in enumerate(nodes_in_level):
-                if str(n) in custom_positions:
-                    x, y_custom = custom_positions[str(n)]
-                    positions[n] = (x, y_custom, x + box_width, y_custom + box_height)
-                else:
-                    x = start_x + index * (box_width + h_spacing)
-                    positions[n] = (x, y, x + box_width, y + box_height)
+            for f in sorted([f for f in os.listdir(self.diary_folder) if f.lower().endswith(".json")], reverse=True): self.file_listbox.insert(tk.END, f)
+        except FileNotFoundError: pass
+        self.on_file_select()
 
-    # --- Disegno archi ---
-    incoming = {}
-    for (u, v) in edges:
-        incoming.setdefault(v, []).append(u)
-    handled = set()
-    for target, sources in incoming.items():
-        if len(sources) > 1 and target in positions:
-            x3, y3, x4, y4 = positions[target]
-            end_x = (x3 + x4) / 2
-            end_y = y3
-            merge_y = end_y - 30
-            merge_x = end_x
-            for src in sources:
-                if src not in positions:
-                    continue
-                x1, y1, x2, y2 = positions[src]
-                start_x = (x1 + x2) / 2
-                start_y = y2
-                canvas.create_line(start_x, start_y, start_x, merge_y, fill="black")
-                if abs(start_x - merge_x) > 2:
-                    canvas.create_line(start_x, merge_y, merge_x, merge_y, fill="black")
-            canvas.create_line(merge_x, merge_y, end_x, end_y, fill="black")
-            for src in sources:
-                handled.add((src, target))
-    for (u, v) in edges:
-        if (u, v) in handled:
-            continue
-        if u in positions and v in positions:
-            x1, y1, x2, y2 = positions[u]
-            x3, y3, x4, y4 = positions[v]
-            start_x = (x1 + x2) / 2
-            start_y = y2
-            end_x = (x3 + x4) / 2
-            end_y = y3
-            if abs(start_x - end_x) < 2:
-                canvas.create_line(start_x, start_y, end_x, end_y, fill="black")
-            else:
-                mid_y = (start_y + end_y) / 2
-                canvas.create_line(start_x, start_y, start_x, mid_y, fill="black")
-                canvas.create_line(start_x, mid_y, end_x, mid_y, fill="black")
-                canvas.create_line(end_x, mid_y, end_x, end_y, fill="black")
-    for (u, v) in uguale_edges:
-        if u in positions and v in positions:
-            cx_u = (positions[u][0] + positions[u][2]) / 2
-            cy_u = (positions[u][1] + positions[u][3]) / 2
-            cx_v = (positions[v][0] + positions[v][2]) / 2
-            cy_v = (positions[v][1] + positions[v][3]) / 2
-            canvas.create_line(cx_u, cy_u, cx_v, cy_v, dash=(4, 2), fill="red")
-    node_ids = {}
-    for n, coords in positions.items():
-        x1, y1, x2, y2 = coords
-        rect_id = canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black", tags=f"us_{n}")
-        text_id = canvas.create_text((x1 + x2) / 2, (y1 + y2) / 2, text=f"US {n}", tags=f"us_{n}")
-        node_ids[n] = (rect_id, text_id)
-    dragging = {"node": None, "offset": (0,0)}
-    def on_press(event):
-        for n, (rect_id, text_id) in node_ids.items():
-            x1, y1, x2, y2 = positions[n]
-            if x1 <= event.x <= x2 and y1 <= event.y <= y2:
-                dragging["node"] = n
-                dragging["offset"] = (event.x - x1, event.y - y1)
-                break
-    def on_motion(event):
-        n = dragging["node"]
-        if n is not None:
-            dx, dy = dragging["offset"]
+    def display_selected_file(self):
+        if not (selected_index := self.file_listbox.curselection()): return
+        filename = self.file_listbox.get(selected_index[0])
+        data = load_json_file(os.path.join(self.diary_folder, filename))
+        self.content_text.config(state="normal"); self.content_text.delete("1.0", tk.END)
+        self.content_text.insert("1.0", json.dumps(data, indent=4, ensure_ascii=False) if data else "Errore nel caricamento del file o file vuoto.")
+        self.content_text.config(state="disabled")
 
-            x = event.x - dx
-            y = event.y - dy
-           
+    def new_diary(self):
+        dialog = DiaryEditDialog(self, project_data=self.master.project_data)
+        self.wait_window(dialog); self.load_diary_files(); self.master.refresh_treeview()
 
-            # Snap alla griglia durante il drag
-            x_snap = round(x / GRID_SIZE) * GRID_SIZE
-            y_snap = round(y / GRID_SIZE) * GRID_SIZE
-            # Limiti canvas
-            min_x = 0
-            min_y = 0
-            max_x = int(canvas['width']) - box_width if 'width' in canvas.keys() else canvas.winfo_width() - box_width
-            max_y = int(canvas['height']) - box_height if 'height' in canvas.keys() else canvas.winfo_height() - box_height
-            x_snap = max(min_x, min(x_snap, max_x))
-            y_snap = max(min_y, min(y_snap, max_y))
-            positions[n] = (x_snap, y_snap, x_snap + box_width, y_snap + box_height)
-            canvas.coords(node_ids[n][0], x_snap, y_snap, x_snap + box_width, y_snap + box_height)
-            canvas.coords(node_ids[n][1], x_snap + box_width/2, y_snap + box_height/2)
+    def edit_diary(self):
+        if not (selected_index := self.file_listbox.curselection()): return
+        filename = self.file_listbox.get(selected_index[0])
+        if not (existing_data := load_json_file(os.path.join(self.diary_folder, filename))): return
+        dialog = DiaryEditDialog(self, project_data=self.master.project_data, existing_data=existing_data, original_filename=filename)
+        self.wait_window(dialog); self.load_diary_files(); self.master.refresh_treeview()
 
-    def on_release(event):
-        n = dragging["node"]
-        if n is not None:
-            to_save = {str(k): [positions[k][0], positions[k][1]] for k in positions}
-            with open(pos_path, "w", encoding="utf-8") as f:
-                json.dump(to_save, f, indent=2)
-        dragging["node"] = None
-    canvas.bind("<ButtonPress-1>", on_press)
-    canvas.bind("<B1-Motion>", on_motion)
-    canvas.bind("<ButtonRelease-1>", on_release)
-    tk.Label(editor_win, text="Trascina i nodi US per modificare la disposizione. Le posizioni vengono salvate automaticamente.").pack()
-    GRID_SIZE = 30  # dimensione griglia per snap (definito anche sopra, qui serve per la griglia visiva)
-    # Disegna la griglia sul canvas per aiutare lo snap
-    def draw_grid():
-        canvas.delete('grid')
-        step = GRID_SIZE
-        w = int(canvas['width']) if 'width' in canvas.keys() else canvas.winfo_width()
-        h = int(canvas['height']) if 'height' in canvas.keys() else canvas.winfo_height()
-        for x in range(0, w, step):
-            canvas.create_line(x, 0, x, h, fill='#e0e0e0', tags='grid')
-        for y in range(0, h, step):
-            canvas.create_line(0, y, w, y, fill='#e0e0e0', tags='grid')
-    # Ridisegna la griglia quando il canvas cambia dimensione
-    canvas.bind('<Configure>', lambda e: draw_grid())
-    draw_grid()
-
-# Esportazione CSV solo delle schede filtrate
-# Sostituisci la funzione esporta_us_csv con una che esporta solo le schede attualmente visibili
-import csv
-
-def esporta_us_csv():
-    if not file_labels:
-        messagebox.showinfo("Esporta CSV", "Nessuna scheda US da esportare.")
-        return
-    all_data = []
-    for filename in file_labels:
-        with open(os.path.join(US_DIR, filename), encoding="utf-8") as f:
-            data = json.load(f)
-            all_data.append(data)
-    all_keys = set()
-    for d in all_data:
-        all_keys.update(d.keys())
-    all_keys = sorted(all_keys)
-    from tkinter import filedialog
-    save_path = filedialog.asksaveasfilename(
-        defaultextension=".csv",
-        filetypes=[("CSV files", "*.csv")],
-        title="Esporta le schede US filtrate in CSV"
-    )
-    if not save_path:
-        return
-    with open(save_path, "w", encoding="utf-8", newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=all_keys, delimiter=';')
-        writer.writeheader()
-        for d in all_data:
-            d2 = {k: (", ".join(map(str, v)) if isinstance(v, list) else v) for k, v in d.items()}
-            writer.writerow(d2)
-    messagebox.showinfo("Esporta CSV", f"Esportazione completata in:\n{save_path}")
-
-def esporta_matrix_svg():
-    # Carica tutte le schede dalla directory
-    schede = []
-    for filename in sorted(os.listdir(US_DIR)):
-        if filename.endswith(".json") and filename != "prog_manager.json":
-            filepath = os.path.join(US_DIR, filename)
+    def delete_diary(self):
+        if not (selected_index := self.file_listbox.curselection()): return
+        filename = self.file_listbox.get(selected_index[0])
+        if messagebox.askyesno("Conferma Eliminazione", f"Sei sicuro di voler eliminare permanentemente '{filename}'?"):
             try:
-                with open(filepath, encoding="utf-8") as f:
-                    data = json.load(f)
-                    if "nr_us" in data:
-                        schede.append(data)
-            except Exception as e:
-                pass
-    if not schede:
-        messagebox.showinfo("Esporta Matrix", "Nessuna scheda disponibile per esportare la matrix.")
-        return
-    nodes = {s['nr_us']: s for s in schede}
-    edges_set = set()
-    for s in schede:
-        u = s['nr_us']
-        for v in s.get("copre", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("coperto_da", []):
-            if v in nodes:
-                edges_set.add((v, u))
-        for v in s.get("si_lega_a", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("gli_si_appoggia", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("si_appoggia_a", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("taglia", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("tagliato_da", []):
-            if v in nodes:
-                edges_set.add((v, u))
-        for v in s.get("riempie", []):
-            if v in nodes:
-                edges_set.add((u, v))
-        for v in s.get("riempito_da", []):
-            if v in nodes:
-                edges_set.add((v, u))
-    edges = list(edges_set)
-    uguale_edges = set()
-    for s in schede:
-        u = s['nr_us']
-        for v in s.get("uguale_a", []):
-            if v in nodes:
-                pair = tuple(sorted([u, v]))
-                uguale_edges.add(pair)
-    levels = {n: 0 for n in nodes}
-    changed = True
-    while changed:
-        changed = False
-        for (u, v) in edges:
-            if levels[v] < levels[u] + 1:
-                levels[v] = levels[u] + 1
-                changed = True
-    levels_group = {}
-    for n, lvl in levels.items():
-        levels_group.setdefault(lvl, []).append(n)
-    # RIMOSSO OGNI ORDINAMENTO NUMERICO: non ordinare i livelli numericamente
-    # for lvl in levels_group:
-    #     levels_group[lvl].sort()
-    max_level = max(levels_group.keys())
-    box_width = 80
-    box_height = 40
-    h_spacing = 40
-    v_spacing = 80
-    max_nodes_in_row = max(len(group) for group in levels_group.values())
-    canvas_width = int(max_nodes_in_row * (box_width + h_spacing) + h_spacing)
-    canvas_height = int((max_level + 1) * (box_height + v_spacing) + v_spacing)
+                os.remove(os.path.join(self.diary_folder, filename))
+                messagebox.showinfo("Eliminato", f"'{filename}' è stato eliminato.")
+                self.load_diary_files(); self.master.refresh_treeview()
+            except Exception as e: messagebox.showerror("Errore", f"Impossibile eliminare il file: {e}")
 
-    # --- Calcolo posizioni dei nodi (positions) ---
-    positions = {}
-    # Carica posizioni personalizzate se esistono
-    pos_path = os.path.join(US_DIR, "positions.json")
-    custom_positions = {}
-    if os.path.exists(pos_path):
+# --- Finds Management (NUOVA SEZIONE) ---
+
+FINDS_FOLDER = "finds_usm"
+
+def get_next_find_id():
+    """Genera il prossimo ID progressivo per un reperto (es. 0001)."""
+    os.makedirs(FINDS_FOLDER, exist_ok=True)
+    files = [f for f in os.listdir(FINDS_FOLDER) if f.lower().endswith(".json")]
+    if not files:
+        return "0001"
+    
+    max_id = 0
+    for f in files:
         try:
-            with open(pos_path, "r", encoding="utf-8") as f:
-                custom_positions = json.load(f)
-        except Exception:
-            custom_positions = {}
-    for lvl in range(max_level + 1):
-        if lvl in levels_group:
-            nodes_in_level = levels_group[lvl]
-            count = len(nodes_in_level)
-            total_width = count * box_width + (count - 1) * h_spacing
-            start_x = (canvas_width - total_width) / 2
-            y = v_spacing + lvl * (box_height + v_spacing)
-            for index, n in enumerate(nodes_in_level):
-                if str(n) in custom_positions:
-                    x, y_custom = custom_positions[str(n)]
-                    positions[n] = (x, y_custom, x + box_width, y_custom + box_height)
-                else:
-                    x = start_x + index * (box_width + h_spacing)
-                    positions[n] = (x, y, x + box_width, y + box_height)
+            # L'ID è il nome del file senza estensione
+            current_id = int(os.path.splitext(f)[0])
+            if current_id > max_id:
+                max_id = current_id
+        except (ValueError, IndexError):
+            continue # Ignora file con nomi non validi
+            
+    next_id = max_id + 1
+    if next_id > 9999:
+        messagebox.showwarning("Attenzione", "ID reperto ha superato 9999.")
+        return str(next_id)
+        
+    return f"{next_id:04d}"
 
-    from tkinter import filedialog
-    save_path = filedialog.asksaveasfilename(
-        defaultextension=".svg",
-        filetypes=[("SVG files", "*.svg")],
-        title="Esporta Matrix di Harris in SVG"
-    )
-    if not save_path:
-        return
-    svg = []
-    svg.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{canvas_width}" height="{canvas_height}">')
-    # --- Disegno: ogni relazione è sempre 1 a 1, ma con merge point per convergenze ---
-    handled = set()
-    incoming = {}
-    for (u, v) in edges:
-        incoming.setdefault(v, []).append(u)
-    for target, sources in incoming.items():
-        if len(sources) > 1 and target in positions:
-            x3, y3, x4, y4 = positions[target]
-            end_x = (x3 + x4) / 2
-            end_y = y3
-            merge_y = end_y - 30
-            merge_x = end_x
-            for src in sources:
-                if src not in positions:
-                    continue
-                x1, y1, x2, y2 = positions[src]
-                start_x = (x1 + x2) / 2
-                start_y = y2
-                svg.append(f'<line x1="{start_x}" y1="{start_y}" x2="{start_x}" y2="{merge_y}" stroke="black"/>')
-                if abs(start_x - merge_x) > 2:
-                    svg.append(f'<line x1="{start_x}" y1="{merge_y}" x2="{merge_x}" y2="{merge_y}" stroke="black"/>')
-            svg.append(f'<line x1="{merge_x}" y1="{merge_y}" x2="{end_x}" y2="{end_y}" stroke="black"/>')
-            for src in sources:
-                handled.add((src, target))
-    for (u, v) in edges:
-        if (u, v) in handled:
-            continue
-        if u in positions and v in positions:
-            x1, y1, x2, y2 = positions[u]
-            x3, y3, x4, y4 = positions[v]
-            start_x = (x1 + x2) / 2
-            start_y = y2
-            end_x = (x3 + x4) / 2
-            end_y = y3
-            if abs(start_x - end_x) < 2:
-                svg.append(f'<line x1="{start_x}" y1="{start_y}" x2="{end_x}" y2="{end_y}" stroke="black"/>')
-            else:
-                mid_y = (start_y + end_y) / 2
-                svg.append(f'<line x1="{start_x}" y1="{start_y}" x2="{start_x}" y2="{mid_y}" stroke="black"/>')
-                svg.append(f'<line x1="{start_x}" y1="{mid_y}" x2="{end_x}" y2="{mid_y}" stroke="black"/>')
-                svg.append(f'<line x1="{end_x}" y1="{mid_y}" x2="{end_x}" y2="{end_y}" stroke="black"/>')
-    for (u, v) in uguale_edges:
-        if u in positions and v in positions:
-            cx_u = (positions[u][0] + positions[u][2]) / 2
-            cy_u = (positions[u][1] + positions[u][3]) / 2
-            cx_v = (positions[v][0] + positions[v][2]) / 2
-            cy_v = (positions[v][1] + positions[v][3]) / 2
-            svg.append(f'<line x1="{cx_u}" y1="{cy_u}" x2="{cx_v}" y2="{cy_v}" stroke="red" stroke-dasharray="4,2"/>')
-    for n, coords in positions.items():
-        x1, y1, x2, y2 = coords
-        svg.append(f'<rect x="{x1}" y="{y1}" width="{box_width}" height="{box_height}" fill="white" stroke="black"/>')
-        svg.append(f'<text x="{(x1 + x2) / 2}" y="{(y1 + y2) / 2 + 5}" font-size="16" text-anchor="middle" fill="black">US {n}</text>')
-    svg.append('</svg>')
-    with open(save_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(svg))
-    messagebox.showinfo("Esporta Matrix", f"Matrix esportata in SVG:\n{save_path}")
+class FindEditDialog(tk.Toplevel):
+    """Dialogo per la creazione e modifica di una scheda reperto."""
+    def __init__(self, master, project_data, existing_data=None, original_filename=None):
+        super().__init__(master)
+        self.title("Nuova Scheda Reperto" if existing_data is None else "Modifica Scheda Reperto")
+        self.resizable(False, False)
+        self.project_data = project_data
+        self.existing_data = existing_data
+        self.original_filename = original_filename
+        
+        self.create_widgets()
+        if self.existing_data:
+            self.populate_fields()
+        else:
+            self.id_var.set(get_next_find_id())
+            self.date_var.set(datetime.date.today().strftime('%Y%m%d'))
+            self.update_identifier()
 
-# AVVIO: controlla presenza parametri progetto
-def main():
-    if not os.path.exists(PROG_MANAGER_PATH):
-        mostra_popup_parametri()
-    else:
-        avvia_gui_principale()
-    root.mainloop()
+    def create_widgets(self):
+        main_frame = ttk.Frame(self)
+        main_frame.pack(padx=15, pady=15)
+        
+        self.entries = {}
+        row = 0
+
+        ttk.Label(main_frame, text="ID Progressivo:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.id_var = tk.StringVar()
+        ttk.Label(main_frame, textvariable=self.id_var, font=("Arial", 10, "bold")).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        row += 1
+
+        ttk.Label(main_frame, text="Nome Progetto:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        ttk.Label(main_frame, text=self.project_data.get("project_name", "N/A")).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        row += 1
+        ttk.Label(main_frame, text="ID Progetto:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.project_id_label = ttk.Label(main_frame, text=self.project_data.get("project_id", "N/A"))
+        self.project_id_label.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        row += 1
+
+        ttk.Label(main_frame, text="Tipo:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.tipo_var = tk.StringVar()
+        tipo_combo = ttk.Combobox(main_frame, textvariable=self.tipo_var, values=["Reperto Singolo", "Sacchetto"], state="readonly", width=38)
+        tipo_combo.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        self.entries["Tipo"] = self.tipo_var
+        row += 1
+
+        ttk.Label(main_frame, text="Data (AAAAMMDD):").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.date_var = tk.StringVar()
+        date_entry = ttk.Entry(main_frame, textvariable=self.date_var, width=40)
+        date_entry.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        date_entry.bind("<KeyRelease>", self.update_identifier)
+        self.entries["Data"] = self.date_var
+        row += 1
+
+        ttk.Label(main_frame, text="Tipologia Reperto:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.tipologia_reperto_var = tk.StringVar()
+        tipologie = ["ceramica", "concotto", "industria litica", "metallo", "ossa umane", "resti faunistici", "resti botanici", "carbone", "intonaco", "altro"]
+        tipologia_combo = ttk.Combobox(main_frame, textvariable=self.tipologia_reperto_var, values=tipologie, state="readonly", width=38)
+        tipologia_combo.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        tipologia_combo.bind("<<ComboboxSelected>>", self.update_identifier)
+        self.entries["Tipologia Reperto"] = self.tipologia_reperto_var
+        row += 1
+
+        ttk.Label(main_frame, text="Identificativo:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.identifier_var = tk.StringVar()
+        ttk.Label(main_frame, textvariable=self.identifier_var, foreground="blue", wraplength=300).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        row += 1
+
+        ttk.Label(main_frame, text="Nr. Reperti:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.nr_reperti_var = tk.StringVar()
+        nr_reperti_entry = ttk.Entry(main_frame, textvariable=self.nr_reperti_var, width=40)
+        nr_reperti_entry.config(validate="key", validatecommand=(self.register(lambda v: v.isdigit() or v == ""), "%P"))
+        nr_reperti_entry.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        self.entries["Nr Reperti"] = self.nr_reperti_var
+        row += 1
+
+        simple_fields = {"Nome area": "Nome Area", "Quadrato": "Quadrato", "Quadrante": "Quadrante"}
+        for key, label_text in simple_fields.items():
+            ttk.Label(main_frame, text=label_text + ":").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+            var = tk.StringVar()
+            ttk.Entry(main_frame, textvariable=var, width=40).grid(row=row, column=1, sticky="w", padx=5, pady=3)
+            self.entries[key] = var
+            row += 1
+
+        ttk.Label(main_frame, text="US di riferimento:").grid(row=row, column=0, sticky="w", padx=5, pady=3)
+        self.us_var = tk.StringVar()
+        us_options = list_su_reports()
+        us_combo = ttk.Combobox(main_frame, textvariable=self.us_var, values=us_options, state="readonly", width=38)
+        us_combo.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        self.entries["US"] = self.us_var
+        row += 1
+
+        ttk.Label(main_frame, text="Descrizione:").grid(row=row, column=0, sticky="nw", padx=5, pady=3)
+        self.description_text = tk.Text(main_frame, width=40, height=5)
+        self.description_text.grid(row=row, column=1, sticky="w", padx=5, pady=3)
+        row += 1
+
+        save_button = ttk.Button(main_frame, text="\U0001F4BE Salva", command=self.save_find)
+        save_button.grid(row=row, column=0, columnspan=2, pady=10)
+
+    def update_identifier(self, event=None):
+        find_id = self.id_var.get()
+        proj_id = self.project_data.get("project_id", "N/A")
+        date = self.date_var.get()
+        find_type = self.tipologia_reperto_var.get().replace(" ", "-")
+        self.identifier_var.set(f"{find_id}_{proj_id}_{date}_{find_type}" if find_id and proj_id and date and find_type else "...")
+
+    def populate_fields(self):
+        self.id_var.set(self.existing_data.get("ID", ""))
+        for key, var in self.entries.items():
+            var.set(self.existing_data.get(key, ""))
+        self.description_text.delete("1.0", tk.END)
+        self.description_text.insert("1.0", self.existing_data.get("Descrizione", ""))
+        self.update_identifier()
+
+    def save_find(self):
+        if not self.tipo_var.get() or not self.date_var.get() or not self.tipologia_reperto_var.get():
+            messagebox.showerror("Errore", "I campi 'Tipo', 'Data' e 'Tipologia Reperto' sono obbligatori.")
+            return
+        
+        find_id = self.id_var.get()
+        new_filename = f"{find_id}.json"
+        filepath = os.path.join(FINDS_FOLDER, new_filename)
+
+        if self.original_filename is None and os.path.exists(filepath):
+            messagebox.showerror("Errore", f"Un reperto con ID {find_id} esiste già.")
+            return
+
+        data = { "ID": find_id, "Nome Progetto": self.project_data.get("project_name", "N/A"), "ID Progetto": self.project_data.get("project_id", "N/A"), "Identificativo Reperto": self.identifier_var.get(), "Descrizione": self.description_text.get("1.0", tk.END).strip() }
+        for key, var in self.entries.items():
+            data[key] = var.get()
+        
+        save_json_file(filepath, data)
+        messagebox.showinfo("Successo", f"Scheda reperto '{new_filename}' salvata.")
+        self.destroy()
+
+class FindsManagerDialog(tk.Toplevel):
+    def __init__(self, master, project_data):
+        super().__init__(master)
+        self.title("Gestione Reperti")
+        self.geometry("800x600")
+        self.resizable(True, True)
+        self.master = master
+        self.project_data = project_data
+        os.makedirs(FINDS_FOLDER, exist_ok=True)
+        self.create_widgets()
+        self.load_finds_files()
+
+    def create_widgets(self):
+        main_frame = ttk.Frame(self); main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        button_frame = ttk.Frame(main_frame); button_frame.pack(fill="x", pady=5)
+        self.new_btn = ttk.Button(button_frame, text="Nuova Scheda Reperto", command=self.new_find); self.new_btn.pack(side="left", padx=5)
+        self.edit_btn = ttk.Button(button_frame, text="Modifica", state="disabled", command=self.edit_find); self.edit_btn.pack(side="left", padx=5)
+        self.delete_btn = ttk.Button(button_frame, text="Cancella", state="disabled", command=self.delete_find); self.delete_btn.pack(side="left", padx=5)
+        tree_frame = ttk.Frame(main_frame); tree_frame.pack(fill="both", expand=True, pady=5)
+        columns = ("ID", "Identificativo", "Data", "Tipo", "Tipologia", "US")
+        self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings")
+        for col in columns: self.tree.heading(col, text=col); self.tree.column(col, width=120, anchor="w")
+        self.tree.pack(side="left", fill="both", expand=True)
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview); scrollbar.pack(side="right", fill="y"); self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
+
+    def on_tree_select(self, event=None):
+        state = "normal" if self.tree.selection() else "disabled"
+        self.edit_btn.config(state=state); self.delete_btn.config(state=state)
+
+    def load_finds_files(self):
+        for item in self.tree.get_children(): self.tree.delete(item)
+        files = [f for f in os.listdir(FINDS_FOLDER) if f.lower().endswith(".json")]
+        entries = []
+        for filename in files:
+            if data := load_json_file(os.path.join(FINDS_FOLDER, filename)):
+                entries.append((data.get("ID", ""), data.get("Identificativo Reperto", ""), data.get("Data", ""), data.get("Tipo", ""), data.get("Tipologia Reperto", ""), data.get("US", ""), filename))
+        entries.sort(key=lambda x: x[0])
+        for entry in entries: self.tree.insert("", "end", values=entry[:-1], iid=entry[-1])
+        self.on_tree_select()
+
+    def new_find(self):
+        dialog = FindEditDialog(self, project_data=self.project_data); self.wait_window(dialog); self.load_finds_files()
+
+    def edit_find(self):
+        if not (selected_item_id := self.tree.selection()): return
+        filename = selected_item_id[0]
+        if existing_data := load_json_file(os.path.join(FINDS_FOLDER, filename)):
+            dialog = FindEditDialog(self, project_data=self.project_data, existing_data=existing_data, original_filename=filename)
+            self.wait_window(dialog); self.load_finds_files()
+
+    def delete_find(self):
+        if not (selected_item_id := self.tree.selection()): return
+        filename = selected_item_id[0]
+        if messagebox.askyesno("Conferma Cancellazione", f"Sei sicuro di voler eliminare definitivamente '{filename}'?"):
+            try: os.remove(os.path.join(FINDS_FOLDER, filename)); messagebox.showinfo("Cancellato", f"'{filename}' è stato cancellato."); self.load_finds_files()
+            except Exception as e: messagebox.showerror("Errore", f"Impossibile cancellare il file: {e}")
+
+class USManagerApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("USManager")
+        self.geometry("950x700")
+        self.resizable(True, True)
+        style = ttk.Style(self); style.configure("TButton", font=("Arial", 10), padding=5)
+        style.configure("incomplete", foreground="red"); style.configure("complete", foreground="green")
+        style.map("in_diary_yes", background=[("!selected", "#C8E6C9")]); style.map("in_diary_no", background=[("!selected", "#FFCDD2")])
+        self.project_data = load_project_data()
+        self.create_widgets()
+        self.bind("<Return>", self.perform_search)
+
+    def create_widgets(self):
+        project_info_frame = tk.Frame(self); project_info_frame.pack(fill="x", pady=5)
+        tk.Label(project_info_frame, text=self.project_data.get("project_name", "N/A"), font=tkFont.Font(family="Arial", size=24, weight="bold")).pack(pady=2)
+        tk.Label(project_info_frame, text=self.project_data.get("project_id", "N/A"), font=tkFont.Font(family="Arial", size=18)).pack(pady=2)
+        buttons_frame = tk.Frame(self); buttons_frame.pack(fill="x", pady=10, padx=5)
+        us_actions_frame = ttk.LabelFrame(buttons_frame, text="Azioni US"); us_actions_frame.pack(side="left", padx=5, fill="y")
+        ttk.Button(us_actions_frame, text="+ Nuova US", command=self.open_new_card).pack(side="left", padx=5, pady=5)
+        self.edit_btn = ttk.Button(us_actions_frame, text="✏ Modifica US", command=self.edit_selected, state="disabled"); self.edit_btn.pack(side="left", padx=5, pady=5)
+        self.delete_btn = ttk.Button(us_actions_frame, text="🗑 Cancella US", command=self.delete_selected, state="disabled"); self.delete_btn.pack(side="left", padx=5, pady=5)
+        tools_frame = ttk.LabelFrame(buttons_frame, text="Strumenti"); tools_frame.pack(side="left", padx=5, fill="y")
+        ttk.Button(tools_frame, text="Matrix di Harris", command=self.open_relation_viewer).pack(side="left", padx=5, pady=5)
+        ttk.Button(tools_frame, text="Campi Personalizzati", command=self.open_custom_fields_dialog).pack(side="left", padx=5, pady=5)
+        ttk.Button(tools_frame, text="Gestione Diario", command=self.open_diary_viewer).pack(side="left", padx=5, pady=5)
+        ttk.Button(tools_frame, text="Gestione Reperti", command=self.open_finds_manager).pack(side="left", padx=5, pady=5)
+        ttk.Separator(self, orient="horizontal").pack(fill="x", padx=10, pady=5)
+        tk.Label(self, text="Schede US Esistenti").pack()
+        
+        columns = ("SU", "Nr. Reperti", "Autore", "Data", "Completezza", "Nel diario")
+        self.tree = ttk.Treeview(self, columns=columns, show="headings", height=15)
+        
+        self.tree.heading("SU", text="SU")
+        self.tree.heading("Nr. Reperti", text="Nr. Reperti")
+        self.tree.heading("Autore", text="Autore")
+        self.tree.heading("Data", text="Data")
+        self.tree.heading("Completezza", text="Completezza")
+        self.tree.heading("Nel diario", text="Nel diario")
+        
+        self.tree.column("SU", anchor="center", width=120)
+        self.tree.column("Nr. Reperti", anchor="center", width=80)
+        self.tree.column("Autore", anchor="center", width=150)
+        self.tree.column("Data", anchor="center", width=100)
+        self.tree.column("Completezza", anchor="center", width=100)
+        self.tree.column("Nel diario", anchor="center", width=100)
+        
+        self.tree.pack(fill="both", expand=True, padx=10)
+        self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
+        bottom_search_frame = tk.Frame(self); bottom_search_frame.pack(side="bottom", fill="x", pady=10)
+        self.search_entry = ttk.Entry(bottom_search_frame, width=30); self.search_entry.pack(side="left", padx=10, fill="x", expand=True)
+        self.search_entry.bind("<Return>", self.perform_search)
+        ttk.Button(bottom_search_frame, text="Cerca in Descrizione", command=self.perform_search).pack(side="left", padx=5)
+        self.refresh_treeview()
+
+    def on_tree_select(self, event):
+        state = "normal" if self.tree.selection() else "disabled"
+        self.edit_btn.config(state=state); self.delete_btn.config(state=state)
+    
+    def perform_search(self, event=None): self.refresh_treeview(search_query=self.search_entry.get().strip().lower())
+
+    def open_new_card(self):
+        dialog = USCardDialog(self, self.project_data); self.wait_window(dialog); self.refresh_treeview()
+
+    def edit_selected(self):
+        if not (selected := self.tree.selection()): return
+        filename = self.tree.item(selected[0])["values"][0] + ".json"
+        path = os.path.join("su_report", filename)
+        if not os.path.exists(path):
+            messagebox.showerror("Errore", f"File '{filename}' non trovato.")
+            return
+        if not (data := load_json_file(path)): return
+        dialog = USCardDialog(self, self.project_data, existing_data=data); self.wait_window(dialog); self.refresh_treeview()
+
+    def delete_selected(self):
+        if not (selected := self.tree.selection()): return
+        filename_display = self.tree.item(selected[0])["values"][0]
+        filename = filename_display + ".json"
+        path = os.path.join("su_report", filename)
+        if not os.path.exists(path):
+            messagebox.showerror("Errore", f"File '{filename_display}' non trovato.")
+            return
+        if messagebox.askyesno("Conferma Eliminazione", f"Sei sicuro di voler eliminare '{filename_display}'?"):
+            try: os.remove(path); messagebox.showinfo("Eliminato", f"{filename_display} eliminato."); self.refresh_treeview()
+            except Exception as e: messagebox.showerror("Errore", f"Eliminazione fallita: {e}")
+
+    def open_relation_viewer(self): dialog = RelationViewerDialog(self); self.wait_window(dialog)
+    def open_custom_fields_dialog(self): dialog = CustomFieldsDialog(self, self); self.wait_window(dialog)
+    def open_diary_viewer(self): dialog = DiaryViewerDialog(self); self.wait_window(dialog)
+    def open_finds_manager(self):
+        dialog = FindsManagerDialog(self, self.project_data); dialog.transient(self); dialog.grab_set(); self.wait_window(dialog)
+
+    def _get_finds_count_per_su(self):
+        """Calcola il numero totale di reperti per ogni US."""
+        su_finds_count = {}
+        if not os.path.exists(FINDS_FOLDER):
+            return su_finds_count
+        
+        for filename in os.listdir(FINDS_FOLDER):
+            if filename.lower().endswith(".json"):
+                find_data = load_json_file(os.path.join(FINDS_FOLDER, filename))
+                if find_data and (us_name := find_data.get("US")):
+                    try:
+                        num_items = int(find_data.get("Nr Reperti", 1))
+                    except (ValueError, TypeError):
+                        num_items = 1
+                    
+                    su_finds_count[us_name] = su_finds_count.get(us_name, 0) + num_items
+        return su_finds_count
+
+    def _get_in_diary_su_numbers(self):
+        diary_folder, in_diary_sus = "diary_usm", set()
+        if os.path.exists(diary_folder):
+            for filename in os.listdir(diary_folder):
+                if filename.lower().endswith(".json"):
+                    if (diary_data := load_json_file(os.path.join(diary_folder, filename))) and "SU indagate" in diary_data:
+                        for su_entry in diary_data["SU indagate"].split(','):
+                            try:
+                                if (su_num_str := ''.join(filter(str.isdigit, su_entry.strip()))): in_diary_sus.add(int(su_num_str))
+                            except ValueError: pass
+        return in_diary_sus
+
+    def refresh_treeview(self, search_query=None):
+        for row in self.tree.get_children(): self.tree.delete(row)
+        
+        finds_count = self._get_finds_count_per_su()
+        entries, in_diary_su_numbers = [], self._get_in_diary_su_numbers()
+        
+        for filename in list_su_reports():
+            path = os.path.join("su_report", filename + ".json")
+            if data := load_json_file(path):
+                desc = data.get("Description", "").strip(); obs = data.get("Observations", "").strip(); interp = data.get("Interpretations", "").strip()
+                if search_query and search_query not in (desc + " " + obs + " " + interp).lower(): continue
+                
+                simp = data.get("Simplified Relations", {})
+                is_incomplete = (not simp.get("Covers", "").strip() and not simp.get("Covered by", "").strip()) or not desc or not obs or not interp
+                su_number = data.get("SU number", 0)
+                is_in_diary = su_number in in_diary_su_numbers
+                num_reperti = finds_count.get(filename, 0)
+
+                entries.append((
+                    su_number, 
+                    filename, 
+                    num_reperti,
+                    data.get("Report author", ""), 
+                    data.get("Date", ""), 
+                    "Incompleta" if is_incomplete else "Completa", 
+                    "Sì" if is_in_diary else "No", 
+                    "incomplete" if is_incomplete else "complete", 
+                    "in_diary_yes" if is_in_diary else "in_diary_no"
+                ))
+
+        entries.sort(key=lambda x: x[0])
+        
+        for _, name, num_reperti, author, date, completeness, in_diary, comp_tag, diary_tag in entries:
+            self.tree.insert("", "end", values=(name, num_reperti, author, date, completeness, in_diary), tags=(comp_tag, diary_tag))
 
 if __name__ == "__main__":
-    main()
+    if ensure_project_file():
+        os.makedirs("su_report", exist_ok=True)
+        os.makedirs("manager", exist_ok=True)
+        os.makedirs("diary_usm", exist_ok=True)
+        os.makedirs("finds_usm", exist_ok=True)
+        if not os.path.exists(CUSTOM_FIELDS_PATH):
+            save_json_file(CUSTOM_FIELDS_PATH, [])
+        app = USManagerApp()
+        app.mainloop()
